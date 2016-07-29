@@ -379,8 +379,8 @@ void RenderableModelEntityItem::render(RenderArgs* args) {
         {
             bool success = false;
             AABox bounds = getAABox(success);
-            if ((!_model || (_model && !_model->isLoaded())) && success) {
-                scene->updateUnrezzedObject(getEntityItemID(), bounds);
+            if (_model && !_model->isLoaded() && success) {
+                scene->updateUnrezzedObject(_model->getLoadingPriority(), getEntityItemID(), bounds);
             }
 
             if (!_model || _needsModelReload) {

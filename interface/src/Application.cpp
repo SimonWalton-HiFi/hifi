@@ -4458,6 +4458,7 @@ void Application::domainChanged(const QString& domainHostname) {
     updateWindowTitle();
     // disable physics until we have enough information about our new location to not cause craziness.
     resetPhysicsReadyInformation();
+    _main3DScene->clearUnrezzedObjects();
 }
 
 

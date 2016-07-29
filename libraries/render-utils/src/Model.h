@@ -233,6 +233,7 @@ public:
     const glm::vec3& getRegistrationPoint() const { return _registrationPoint; }
 
     void setLoadingPriority(float priority) { _loadingPriority = priority; }
+    float getLoadingPriority() { return _loadingPriority; }
 
 protected:
 

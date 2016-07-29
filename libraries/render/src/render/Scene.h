@@ -73,12 +73,30 @@ public:
     void processPendingChangesQueue();
 
     // Keep track of any objects that are in the processing of rezzing, but can't be displayed yet
-    QList<AABox> getUnrezzedObjects() { return _unrezzedObjects.values(); }
-    void updateUnrezzedObject(QUuid entityID, AABox bounds) {
+    void clearUnrezzedObjects() {
+        _unrezzedObjectsPriority = std::priority_queue<QPair<float, QUuid>, std::vector<QPair<float, QUuid>>, PriorityComparator>();
+        _unrezzedObjects.clear();
+        _unrezzedLastUpdatedTime = usecTimestampNow();
+    }
+    QList<AABox> getUnrezzedObjects() {
+        auto objectsPriorityCopy = _unrezzedObjectsPriority;
+        QList<AABox> unrezzedObjects;
+        while (objectsPriorityCopy.size() > 0) {
+            auto objectsPair = objectsPriorityCopy.top();
+            if (_unrezzedObjects.contains(objectsPair.second)) {
+                unrezzedObjects.append(_unrezzedObjects[objectsPair.second]);
+            }
+            objectsPriorityCopy.pop();
+        }
+        return unrezzedObjects;
+    }
+    void updateUnrezzedObject(float priority, QUuid entityID, AABox bounds) {
+        _unrezzedObjectsPriority.push(QPair<float, QUuid>(priority, entityID));
         _unrezzedObjects.insert(entityID, bounds);
         _unrezzedLastUpdatedTime = usecTimestampNow();
     }
     void removeUnrezzedObject(QUuid entityID) {
+        // TODO: remove from priority queue
         int numRemoved = _unrezzedObjects.remove(entityID);
         if (numRemoved > 0) {
             _unrezzedLastUpdatedTime = usecTimestampNow();
@@ -116,6 +134,13 @@ protected:
     void removeItems(const ItemIDs& ids);
     void updateItems(const ItemIDs& ids, UpdateFunctors& functors);
 
+    struct PriorityComparator {
+        bool operator()(QPair<float, QUuid> a, QPair<float, QUuid> b) {
+            return a.first > b.first;
+        }
+    };
+
+    std::priority_queue<QPair<float, QUuid>, std::vector<QPair<float, QUuid>>, PriorityComparator> _unrezzedObjectsPriority;
     QHash<QUuid, AABox> _unrezzedObjects;
     quint64 _unrezzedLastUpdatedTime { 0 };
 
