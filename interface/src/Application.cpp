@@ -737,7 +737,14 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer) :
     connect(&identityPacketTimer, &QTimer::timeout, getMyAvatar(), &MyAvatar::sendIdentityPacket);
     identityPacketTimer.start(AVATAR_IDENTITY_PACKET_SEND_INTERVAL_MSECS);
 
-    ResourceCache::setRequestLimit(MAX_CONCURRENT_RESOURCE_DOWNLOADS);
+    const char** constArgv = const_cast<const char**>(argv);
+    QString concurrentDownloadsStr = getCmdOption(argc, constArgv, "--concurrent-downloads");
+    bool success;
+    int concurrentDownloads = concurrentDownloadsStr.toInt(&success);
+    if (!success) {
+        concurrentDownloads = MAX_CONCURRENT_RESOURCE_DOWNLOADS;
+    }
+    ResourceCache::setRequestLimit(concurrentDownloads);
 
     _glWidget = new GLCanvas();
     getApplicationCompositor().setRenderingWidget(_glWidget);
@@ -1632,6 +1639,8 @@ void Application::paintGL() {
     if (_inPaint || _aboutToQuit) {
         return;
     }
+
+    DependencyManager::get<EntityTreeRenderer>()->cameraPosition = getMyAvatar()->getPosition();
 
     _inPaint = true;
     Finally clearFlag([this] { _inPaint = false; });

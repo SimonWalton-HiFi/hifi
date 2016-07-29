@@ -232,6 +232,8 @@ public:
 
     const glm::vec3& getRegistrationPoint() const { return _registrationPoint; }
 
+    void setLoadingPriority(float priority) { _loadingPriority = priority; }
+
 protected:
 
     void setPupilDilation(float dilation) { _pupilDilation = dilation; }
@@ -391,6 +393,9 @@ protected:
     RigPointer _rig;
 
     uint32_t _deleteGeometryCounter { 0 };
+
+private:
+    float _loadingPriority { 0 };
 };
 
 Q_DECLARE_METATYPE(ModelPointer)
