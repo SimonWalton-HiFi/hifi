@@ -13,10 +13,10 @@
 #include <Application.h>
 #include "OctreeConstants.h"
 
-// Overlays.addOverlay("particles", {"dimensions": {x: 32768, y: 32768, z: 32768}, "maxParticles": 10000, "userData": {"ProceduralParticles": {"shaderUrl": "https://hifi-content.s3.amazonaws.com/samuel/loadingParticles.fs", "uniforms": [{"numObjects":[2,0,0,0]}, {"objects":[[5, 5, 5, 0], [1, 1, 1, 0], [10, 10, 10, 0], [3, 3, 3, 0]]}]}}});
-// Overlays.editOverlay(_overlayID, {"userData": {"ProceduralParticles": {"uniforms": [{"numObjects":[0,0,0,0]}]}}});
+// Overlays.addOverlay("particles", {"dimensions": {x: 32768, y: 32768, z: 32768}, "maxParticles": 50000, "userData": {"ProceduralParticles": {"shaderUrl": "https://hifi-content.s3.amazonaws.com/samuel/loadingParticles.fs", "uniforms": [{"numObjects":[2,0,0,0]}, {"objects":[[5, 5, 5, 0], [1, 1, 1, 0], [10, 10, 10, 0], [3, 3, 3, 0]]}]}}});
+// Overlays.editOverlay(1, {"userData": {"ProceduralParticles": {"shaderUrl": "https://hifi-content.s3.amazonaws.com/samuel/loadingParticles.fs", "uniforms": [{"numObjects":[0,0,0,0]}]}}});
 
-// Overlays.addOverlay("particles", {"dimensions": {x: 32768, y: 32768, z: 32768}, "maxParticles": 10000, "userData": {"ProceduralParticles": {"shaderUrl": "https://hifi-content.s3.amazonaws.com/samuel/loadingParticles.fs", "uniforms": []}}})
+// Overlays.addOverlay("particles", {"dimensions": {x: 32768, y: 32768, z: 32768}, "maxParticles": 50000, "userData": {"ProceduralParticles": {"shaderUrl": "https://hifi-content.s3.amazonaws.com/samuel/loadingParticles.fs", "uniforms": []}}})
 
 LoadingParticleOverlay::LoadingParticleOverlay() {
     QVariantMap properties;
@@ -24,12 +24,39 @@ LoadingParticleOverlay::LoadingParticleOverlay() {
     QVariantMap particleProperties;
     particleProperties.insert("shaderUrl", "https://hifi-content.s3.amazonaws.com/samuel/loadingParticles.fs");
 
+    // for testing
+    /*QList<QVariant> uniforms;
+
+    QVariantMap numObjects;
+    QList<QVariant> numObjectsVal = { 3, 0, 0, 0 };
+    numObjects.insert("numObjects", numObjectsVal);
+    uniforms.append(numObjects);
+
+    QVariantMap objects;
+    QList<QVariant> objectsVal = { 5, 5, 5, 0,
+        0.01, 0.01, 0.01, 0,
+        10, 10, 10, 0,
+        0.1, 0.1, 0.1, 0,
+        15, 15, 15, 0,
+        1.0, 1.0, 1.0, 0 };
+    QList<QVariant> objectsVal = { 0, 1, 0, 0,
+        0.5, 0.5, 0.5, 0,
+        0, 3, 0, 0,
+        0.5, 0.5, 0.5, 0,
+        0, 5, 0, 0,
+        0.5, 0.5, 0.5, 0 };
+    objects.insert("objects", objectsVal);
+    uniforms.append(objects);
+
+    particleProperties.insert("uniforms", uniforms);*/
+    // end for testing
+
     QVariantMap userData;
     userData.insert("ProceduralParticles", particleProperties);
 
     // Set the dimensions to be as big as the domain so the effect is never frustum culled
     properties.insert("dimensions", QVector3D(TREE_SCALE, TREE_SCALE, TREE_SCALE));
-    const int NUM_PARTICLES = 10000;
+    const int NUM_PARTICLES = 50000;
     properties.insert("maxParticles", NUM_PARTICLES);
     properties.insert("userData", userData);
 
