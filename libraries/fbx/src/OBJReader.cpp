@@ -30,6 +30,8 @@
 #include "ModelFormatLogging.h"
 #include <shared/PlatformHacks.h>
 
+#include <igl/per_vertex_normals.h>
+
 QHash<QString, float> COMMENT_SCALE_HINTS = {{"This file uses centimeters as units", 1.0f / 100.0f},
                                              {"This file uses millimeters as units", 1.0f / 1000.0f}};
 
@@ -585,6 +587,13 @@ FBXGeometry* OBJReader::readOBJ(QByteArray& model, const QVariantHash& mapping, 
         mesh.parts.clear();
         mesh.parts = QVector<FBXMeshPart>(fbxMeshParts);
 
+        Eigen::MatrixXd V;
+        Eigen::MatrixXi F;
+        Eigen::VectorXd AO;
+
+        Eigen::MatrixXd N;
+        igl::per_vertex_normals(V, F, N);
+
         for (int i = 0, meshPartCount = 0; i < unmodifiedMeshPartCount; i++, meshPartCount++) {
             FaceGroup faceGroup = faceGroups[meshPartCount];
 
@@ -598,12 +607,12 @@ FBXGeometry* OBJReader::readOBJ(QByteArray& model, const QVariantHash& mapping, 
 
                 glm::vec3 vc0, vc1, vc2;
                 bool hasVertexColors = (vertexColors.size() > 0);
-                if (hasVertexColors) {
+                //if (hasVertexColors) {
                     // If there are any vertex colors, it's safe to assume all meshes had them exported.
-                    vc0 = checked_at(vertexColors, face.vertexIndices[0]);
-                    vc1 = checked_at(vertexColors, face.vertexIndices[1]);
-                    vc2 = checked_at(vertexColors, face.vertexIndices[2]);
-                }
+                    vc0 = glm::vec3(1.0f, 0.0f, 0.0f);// checked_at(vertexColors, face.vertexIndices[0]);
+                    vc1 = glm::vec3(0.0f, 1.0f, 0.0f);// checked_at(vertexColors, face.vertexIndices[1]);
+                    vc2 = glm::vec3(0.0f, 0.0f, 1.0f);// checked_at(vertexColors, face.vertexIndices[2]);
+                //}
 
                 // Scale the vertices if the OBJ file scale is specified as non-one.
                 if (scaleGuess != 1.0f) {
@@ -620,12 +629,12 @@ FBXGeometry* OBJReader::readOBJ(QByteArray& model, const QVariantHash& mapping, 
                 meshPart.triangleIndices.append(mesh.vertices.count());
                 mesh.vertices << v2;
 
-                if (hasVertexColors) {
+               // if (hasVertexColors) {
                     // Add vertex colors.
                     mesh.colors << vc0;
                     mesh.colors << vc1;
                     mesh.colors << vc2;
-                }
+                //}
 
                 glm::vec3 n0, n1, n2;
                 if (face.normalIndices.count()) {
