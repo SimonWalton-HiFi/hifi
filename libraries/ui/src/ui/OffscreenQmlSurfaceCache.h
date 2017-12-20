@@ -28,7 +28,7 @@ public:
 
 private:
     QSharedPointer<OffscreenQmlSurface> buildSurface(const QString& rootSource);
-    QHash<QString, QList<QSharedPointer<OffscreenQmlSurface>>> _cache;
+    QHash<QString, std::pair<QList<QSharedPointer<OffscreenQmlSurface>>, int>> _cache;
 };
 
 #endif

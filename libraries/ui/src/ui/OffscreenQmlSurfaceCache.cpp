@@ -21,7 +21,7 @@ OffscreenQmlSurfaceCache::~OffscreenQmlSurfaceCache() {
 }
 
 QSharedPointer<OffscreenQmlSurface> OffscreenQmlSurfaceCache::acquire(const QString& rootSource) {
-    auto& list = _cache[rootSource];
+    auto& list = _cache[rootSource].first;
     if (list.empty()) {
         list.push_back(buildSurface(rootSource));
     }
@@ -31,15 +31,18 @@ QSharedPointer<OffscreenQmlSurface> OffscreenQmlSurfaceCache::acquire(const QStr
 }
 
 void OffscreenQmlSurfaceCache::reserve(const QString& rootSource, int count) {
-    auto& list = _cache[rootSource];
-    while (list.size() < count) {
-        list.push_back(buildSurface(rootSource));
+    auto& listAndReserved = _cache[rootSource];
+    while (listAndReserved.first.size() < count) {
+        listAndReserved.first.push_back(buildSurface(rootSource));
     }
+    listAndReserved.second += count;
 }
 
 void OffscreenQmlSurfaceCache::release(const QString& rootSource, const QSharedPointer<OffscreenQmlSurface>& surface) {
-    surface->pause();
-    _cache[rootSource].push_back(surface);
+    auto& listAndReserved = _cache[rootSource];
+    if (listAndReserved.first.length() < listAndReserved.second) {
+        listAndReserved.first.push_back(surface);
+    }
 }
 
 QSharedPointer<OffscreenQmlSurface> OffscreenQmlSurfaceCache::buildSurface(const QString& rootSource) {
@@ -47,7 +50,6 @@ QSharedPointer<OffscreenQmlSurface> OffscreenQmlSurfaceCache::buildSurface(const
     surface->create();
     surface->setBaseUrl(QUrl::fromLocalFile(PathUtils::resourcesPath() + "/qml/"));
     surface->load(rootSource);
-    surface->resize(QSize(100, 100));
     return surface;
 }
 

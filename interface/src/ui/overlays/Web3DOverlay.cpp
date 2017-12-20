@@ -86,10 +86,6 @@ Web3DOverlay::Web3DOverlay(const Web3DOverlay* Web3DOverlay) :
 }
 
 Web3DOverlay::~Web3DOverlay() {
-    disconnect(this, &Web3DOverlay::requestWebSurface, this, nullptr);
-    disconnect(this, &Web3DOverlay::releaseWebSurface, this, nullptr);
-    disconnect(this, &Web3DOverlay::resizeWebSurface, this, nullptr);
-
     destroyWebSurface();
     auto geometryCache = DependencyManager::get<GeometryCache>();
     if (geometryCache) {
@@ -124,10 +120,7 @@ void Web3DOverlay::destroyWebSurface() {
     }
 
     _webSurface->pause();
-
-    QObject::disconnect(this, &Web3DOverlay::scriptEventReceived, _webSurface.data(), &OffscreenQmlSurface::emitScriptEvent);
-    QObject::disconnect(_webSurface.data(), &OffscreenQmlSurface::webEventReceived, this, &Web3DOverlay::webEventReceived);
-    DependencyManager::get<OffscreenQmlSurfaceCache>()->release(QML, _webSurface);
+    DependencyManager::get<OffscreenQmlSurfaceCache>()->release(isWebContent() ? QML : _url, _webSurface);
     _webSurface.reset();
 }
 

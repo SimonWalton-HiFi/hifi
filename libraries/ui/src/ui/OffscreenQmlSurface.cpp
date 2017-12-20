@@ -1429,7 +1429,7 @@ void OffscreenQmlSurface::emitWebEvent(const QVariant& message) {
 
 void OffscreenQmlSurface::sendToQml(const QVariant& message) {
     if (QThread::currentThread() != thread()) {
-        QMetaObject::invokeMethod(this, "emitQmlEvent", Qt::QueuedConnection, Q_ARG(QVariant, message));
+        QMetaObject::invokeMethod(this, "sendToQml", Qt::QueuedConnection, Q_ARG(QVariant, message));
     } else if (_rootItem) {
         // call fromScript method on qml root
         QMetaObject::invokeMethod(_rootItem, "fromScript", Qt::QueuedConnection, Q_ARG(QVariant, message));
