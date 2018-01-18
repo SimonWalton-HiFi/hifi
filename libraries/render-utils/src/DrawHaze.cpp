@@ -107,11 +107,16 @@ void MakeHaze::run(const render::RenderContextPointer& renderContext, graphics::
     haze = _haze;
 }
 
-const int HazeEffect_ParamsSlot = 0;
-const int HazeEffect_TransformBufferSlot = 1;
-const int HazeEffect_ColorMapSlot = 2;
-const int HazeEffect_LinearDepthMapSlot = 3;
-const int HazeEffect_LightingMapSlot = 4;
+enum HazeShader_MapSlot {
+    DEFERRED_BUFFER_COLOR_UNIT = 0,
+    DEFERRED_BUFFER_LINEAR_DEPTH_UNIT,
+};
+
+enum HazeShader_BufferSlot {
+    DEFERRED_FRAME_TRANSFORM_BUFFER_SLOT = 0,
+    LIGHTING_MODEL_BUFFER_SLOT,
+    HAZE_MODEL
+};
 
 void DrawHaze::configure(const Config& config) {
 }
@@ -143,11 +148,11 @@ void DrawHaze::run(const render::RenderContextPointer& renderContext, const Inpu
         PrepareStencil::testMask(*state);
 
         gpu::Shader::BindingSet slotBindings;
-        slotBindings.insert(gpu::Shader::Binding(std::string("hazeBuffer"), HazeEffect_ParamsSlot));
-        slotBindings.insert(gpu::Shader::Binding(std::string("deferredFrameTransformBuffer"), HazeEffect_TransformBufferSlot));
-        slotBindings.insert(gpu::Shader::Binding(std::string("colorMap"), HazeEffect_ColorMapSlot));
-        slotBindings.insert(gpu::Shader::Binding(std::string("linearDepthMap"), HazeEffect_LinearDepthMapSlot));
-        slotBindings.insert(gpu::Shader::Binding(std::string("lightBuffer"), HazeEffect_LightingMapSlot));
+        slotBindings.insert(gpu::Shader::Binding(std::string("hazeBuffer"), HAZE_MODEL));
+        slotBindings.insert(gpu::Shader::Binding(std::string("deferredFrameTransformBuffer"), DEFERRED_FRAME_TRANSFORM_BUFFER_SLOT));
+        slotBindings.insert(gpu::Shader::Binding(std::string("colorMap"), DEFERRED_BUFFER_COLOR_UNIT));
+        slotBindings.insert(gpu::Shader::Binding(std::string("linearDepthMap"), DEFERRED_BUFFER_LINEAR_DEPTH_UNIT));
+        slotBindings.insert(gpu::Shader::Binding(std::string("lightBuffer"), LIGHTING_MODEL_BUFFER_SLOT));
         gpu::Shader::makeProgram(*program, slotBindings);
 
         _hazePipeline = gpu::PipelinePointer(gpu::Pipeline::create(program, state));
@@ -170,26 +175,26 @@ void DrawHaze::run(const render::RenderContextPointer& renderContext, const Inpu
         if (hazeStage && hazeStage->_currentFrame._hazes.size() > 0) {
             graphics::HazePointer hazePointer = hazeStage->getHaze(hazeStage->_currentFrame._hazes.front());
             if (hazePointer) {
-                batch.setUniformBuffer(HazeEffect_ParamsSlot, hazePointer->getHazeParametersBuffer());
+                batch.setUniformBuffer(HAZE_MODEL, hazePointer->getHazeParametersBuffer());
             } else {
                 // Something is wrong, so just quit Haze
                 return;
             }
         }
 
-        batch.setUniformBuffer(HazeEffect_TransformBufferSlot, transformBuffer->getFrameTransformBuffer());
+        batch.setUniformBuffer(DEFERRED_FRAME_TRANSFORM_BUFFER_SLOT, transformBuffer->getFrameTransformBuffer());
 
 	    auto lightStage = args->_scene->getStage<LightStage>();
 	    if (lightStage) {
 	        graphics::LightPointer keyLight;
 	        keyLight = lightStage->getCurrentKeyLight();
 	        if (keyLight) {
-	            batch.setUniformBuffer(HazeEffect_LightingMapSlot, keyLight->getLightSchemaBuffer());
+	            batch.setUniformBuffer(LIGHTING_MODEL_BUFFER_SLOT, keyLight->getLightSchemaBuffer());
 	        }
 	    }
 
-        batch.setResourceTexture(HazeEffect_ColorMapSlot, inputBuffer);
-        batch.setResourceTexture(HazeEffect_LinearDepthMapSlot, depthBuffer);
+        batch.setResourceTexture(DEFERRED_BUFFER_COLOR_UNIT, inputBuffer);
+        batch.setResourceTexture(DEFERRED_BUFFER_LINEAR_DEPTH_UNIT, depthBuffer);
 
         batch.draw(gpu::TRIANGLE_STRIP, 4);
     });

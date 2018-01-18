@@ -64,19 +64,21 @@ enum DeferredShader_MapSlot {
     DEFERRED_BUFFER_DIFFUSED_CURVATURE_UNIT,
     SCATTERING_LUT_UNIT,
     SCATTERING_SPECULAR_UNIT,
+    NUM_MAP_SLOTS
 };
 enum DeferredShader_BufferSlot {
     DEFERRED_FRAME_TRANSFORM_BUFFER_SLOT = 0,
     CAMERA_CORRECTION_BUFFER_SLOT,
     SCATTERING_PARAMETERS_BUFFER_SLOT,
-    LIGHTING_MODEL_BUFFER_SLOT = render::ShapePipeline::Slot::LIGHTING_MODEL,
-    LIGHT_GPU_SLOT = render::ShapePipeline::Slot::LIGHT,
-    LIGHT_AMBIENT_SLOT = render::ShapePipeline::Slot::LIGHT_AMBIENT_BUFFER,
-    HAZE_MODEL_BUFFER_SLOT = render::ShapePipeline::Slot::HAZE_MODEL,
+    LIGHTING_MODEL_BUFFER_SLOT,
+    LIGHT_GPU_SLOT,
+    LIGHT_AMBIENT_SLOT,
+    HAZE_MODEL_BUFFER_SLOT,
     LIGHT_INDEX_GPU_SLOT,
     LIGHT_CLUSTER_GRID_FRUSTUM_GRID_SLOT,
     LIGHT_CLUSTER_GRID_CLUSTER_GRID_SLOT,
     LIGHT_CLUSTER_GRID_CLUSTER_CONTENT_SLOT,
+    NUM_BUFFER_SLOTS
 };
 
 static void loadLightProgram(const char* vertSource, const char* fragSource, bool lightVolume, gpu::PipelinePointer& program, LightLocationsPtr& locations);
@@ -651,26 +653,13 @@ void RenderDeferredCleanup::run(const render::RenderContextPointer& renderContex
     auto& batch = (*args->_batch);
     {
         // Probably not necessary in the long run because the gpu layer would unbound this texture if used as render target
-        batch.setResourceTexture(DEFERRED_BUFFER_COLOR_UNIT, nullptr);
-        batch.setResourceTexture(DEFERRED_BUFFER_NORMAL_UNIT, nullptr);
-        batch.setResourceTexture(DEFERRED_BUFFER_EMISSIVE_UNIT, nullptr);
-        batch.setResourceTexture(DEFERRED_BUFFER_DEPTH_UNIT, nullptr);
-        batch.setResourceTexture(DEFERRED_BUFFER_OBSCURANCE_UNIT, nullptr);
+        for (int i = 0; i < NUM_MAP_SLOTS; i++) {
+            batch.setResourceTexture(i, nullptr);
+        }
 
-        batch.setResourceTexture(DEFERRED_BUFFER_LINEAR_DEPTH_UNIT, nullptr);
-        batch.setResourceTexture(DEFERRED_BUFFER_CURVATURE_UNIT, nullptr);
-        batch.setResourceTexture(DEFERRED_BUFFER_DIFFUSED_CURVATURE_UNIT, nullptr);
-        batch.setResourceTexture(SCATTERING_LUT_UNIT, nullptr);
-        batch.setResourceTexture(SCATTERING_SPECULAR_UNIT, nullptr);
-
-        batch.setUniformBuffer(SCATTERING_PARAMETERS_BUFFER_SLOT, nullptr);
-        //     batch.setUniformBuffer(LIGHTING_MODEL_BUFFER_SLOT, nullptr);
-        batch.setUniformBuffer(DEFERRED_FRAME_TRANSFORM_BUFFER_SLOT, nullptr);
-
-        batch.setUniformBuffer(LIGHT_CLUSTER_GRID_FRUSTUM_GRID_SLOT, nullptr);
-        batch.setUniformBuffer(LIGHT_CLUSTER_GRID_CLUSTER_GRID_SLOT, nullptr);
-        batch.setUniformBuffer(LIGHT_CLUSTER_GRID_CLUSTER_CONTENT_SLOT, nullptr);
-
+        for (int i = 0; i < NUM_BUFFER_SLOTS; i++) {
+            batch.setUniformBuffer(i, nullptr);
+        }
     }
 }
 

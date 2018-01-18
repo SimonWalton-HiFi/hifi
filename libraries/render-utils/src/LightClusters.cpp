@@ -30,20 +30,21 @@
 
 enum LightClusterGridShader_MapSlot {
     DEFERRED_BUFFER_LINEAR_DEPTH_UNIT = 0,
-    DEFERRED_BUFFER_COLOR_UNIT = 1,
-    DEFERRED_BUFFER_NORMAL_UNIT = 2,
-    DEFERRED_BUFFER_EMISSIVE_UNIT = 3,
-    DEFERRED_BUFFER_DEPTH_UNIT = 4,
+    DEFERRED_BUFFER_COLOR_UNIT,
+    DEFERRED_BUFFER_NORMAL_UNIT,
+    DEFERRED_BUFFER_EMISSIVE_UNIT,
+    DEFERRED_BUFFER_DEPTH_UNIT,
+    NUM_MAP_SLOTS
 };
 
 enum LightClusterGridShader_BufferSlot {
     DEFERRED_FRAME_TRANSFORM_BUFFER_SLOT = 0,
-    CAMERA_CORRECTION_BUFFER_SLOT = 1,
-    LIGHT_GPU_SLOT = render::ShapePipeline::Slot::LIGHT,
-    LIGHT_INDEX_GPU_SLOT = 7,
-    LIGHT_CLUSTER_GRID_FRUSTUM_GRID_SLOT = 8,
-    LIGHT_CLUSTER_GRID_CLUSTER_GRID_SLOT = 9,
-    LIGHT_CLUSTER_GRID_CLUSTER_CONTENT_SLOT = 10,
+    CAMERA_CORRECTION_BUFFER_SLOT,
+    LIGHT_GPU_SLOT,
+    LIGHT_CLUSTER_GRID_FRUSTUM_GRID_SLOT,
+    LIGHT_CLUSTER_GRID_CLUSTER_GRID_SLOT,
+    LIGHT_CLUSTER_GRID_CLUSTER_CONTENT_SLOT,
+    NUM_BUFFER_SLOTS
 };
 
 FrustumGrid::FrustumGrid(const FrustumGrid& source) :
@@ -742,9 +743,6 @@ void DebugLightClusters::run(const render::RenderContextPointer& renderContext, 
         }
 
         batch.draw(gpu::TRIANGLE_STRIP, 4, 0);
-              
-        batch.setResourceTexture(DEFERRED_BUFFER_LINEAR_DEPTH_UNIT, nullptr);
-        batch.setUniformBuffer(DEFERRED_FRAME_TRANSFORM_BUFFER_SLOT, nullptr);
     }
 
     if (doDrawContent) {
@@ -758,9 +756,6 @@ void DebugLightClusters::run(const render::RenderContextPointer& renderContext, 
         }
 
         batch.draw(gpu::TRIANGLE_STRIP, 4, 0);
-              
-        batch.setResourceTexture(DEFERRED_BUFFER_LINEAR_DEPTH_UNIT, nullptr);
-        batch.setUniformBuffer(DEFERRED_FRAME_TRANSFORM_BUFFER_SLOT, nullptr);
     }
 
 
@@ -776,15 +771,13 @@ void DebugLightClusters::run(const render::RenderContextPointer& renderContext, 
         drawGridAndCleanBatch.drawInstanced(summedDims.x, gpu::LINES, 24, 0);
     }
 
-    drawGridAndCleanBatch.setUniformBuffer(LIGHT_GPU_SLOT, nullptr);
-    drawGridAndCleanBatch.setUniformBuffer(LIGHT_CLUSTER_GRID_FRUSTUM_GRID_SLOT, nullptr);
-    drawGridAndCleanBatch.setUniformBuffer(LIGHT_CLUSTER_GRID_CLUSTER_GRID_SLOT, nullptr);
-    drawGridAndCleanBatch.setUniformBuffer(LIGHT_CLUSTER_GRID_CLUSTER_CONTENT_SLOT, nullptr);
+    for (int i = 0; i < NUM_MAP_SLOTS; i++) {
+        drawGridAndCleanBatch.setResourceTexture(i, nullptr);
+    }
 
-    drawGridAndCleanBatch.setResourceTexture(DEFERRED_BUFFER_COLOR_UNIT, nullptr);
-    drawGridAndCleanBatch.setResourceTexture(DEFERRED_BUFFER_NORMAL_UNIT, nullptr);
-    drawGridAndCleanBatch.setResourceTexture(DEFERRED_BUFFER_EMISSIVE_UNIT, nullptr);
-    drawGridAndCleanBatch.setResourceTexture(DEFERRED_BUFFER_DEPTH_UNIT, nullptr);
+    for (int i = 0; i < NUM_BUFFER_SLOTS; i++) {
+        drawGridAndCleanBatch.setUniformBuffer(i, nullptr);
+    }
 
     args->_context->appendFrameBatch(batch);
     args->_context->appendFrameBatch(drawGridAndCleanBatch);

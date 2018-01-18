@@ -57,8 +57,8 @@ enum TextureSlot {
 };
 
 enum ParamSlot {
-    CameraCorrection = 0,
-    DeferredFrameTransform,
+    DeferredFrameTransform = 0,
+    CameraCorrection,
     ShadowTransform
 };
 

@@ -118,7 +118,7 @@ void Skybox::render(gpu::Batch& batch, const ViewFrustum& viewFrustum, const Sky
     batch.setModelTransform(Transform()); // only for Mac
 
     batch.setPipeline(thePipeline);
-    skybox.prepare(batch);
+    skybox.prepare(batch, SKYBOX_SKYMAP_SLOT, SKYBOX_CONSTANTS_SLOT);
     batch.draw(gpu::TRIANGLE_STRIP, 4);
 
     batch.setResourceTexture(SKYBOX_SKYMAP_SLOT, nullptr);

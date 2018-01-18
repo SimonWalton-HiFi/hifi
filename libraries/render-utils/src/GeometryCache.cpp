@@ -1942,7 +1942,7 @@ void GeometryCache::renderGlowLine(gpu::Batch& batch, const glm::vec3& p1, const
     }
 
     // Compile the shaders
-    static const uint32_t LINE_DATA_SLOT = 1;
+    static const uint32_t LINE_DATA_SLOT = 0;
     static std::once_flag once;
     std::call_once(once, [&] {
         auto state = std::make_shared<gpu::State>();
