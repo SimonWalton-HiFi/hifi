@@ -133,7 +133,11 @@ void MaterialEntityItem::debugDump() const {
 }
 
 void MaterialEntityItem::setUnscaledDimensions(const glm::vec3& value) {
-    EntityItem::setUnscaledDimensions(ENTITY_ITEM_DEFAULT_DIMENSIONS);
+    if (_materialMode == MaterialMode::UV) {
+        EntityItem::setUnscaledDimensions(ENTITY_ITEM_DEFAULT_DIMENSIONS);
+    } else if (_materialMode == MaterialMode::PROJECTED) {
+        EntityItem::setUnscaledDimensions(value);
+    }
 }
 
 std::shared_ptr<NetworkMaterial> MaterialEntityItem::getMaterial() const {
@@ -217,6 +221,15 @@ void MaterialEntityItem::setUserData(const QString& userData) {
     }
 }
 
+void MaterialEntityItem::setMaterialMode(MaterialMode mode) {
+    if (_materialMode != mode) {
+        removeMaterial();
+        _materialMode = mode;
+        setUnscaledDimensions(getUnscaledDimensions());
+        applyMaterial();
+    }
+}
+
 void MaterialEntityItem::setMaterialPos(const glm::vec2& materialPos) {
     if (_materialPos != materialPos) {
         removeMaterial();
@@ -281,6 +294,18 @@ void MaterialEntityItem::setOwningAvatarID(const QUuid& owningAvatarID) {
     }
 }
 
+void MaterialEntityItem::locationChanged(bool tellPhysics) {
+    removeMaterial();
+    EntityItem::locationChanged();
+    applyMaterial();
+}
+
+void MaterialEntityItem::dimensionsChanged() {
+    removeMaterial();
+    EntityItem::dimensionsChanged();
+    applyMaterial();
+}
+
 void MaterialEntityItem::removeMaterial() {
     graphics::MaterialPointer material = getMaterial();
     QUuid parentID = getClientOnly() ? getOwningAvatarID() : getParentID();
@@ -317,10 +342,15 @@ void MaterialEntityItem::applyMaterial() {
         return;
     }
     Transform textureTransform;
-    textureTransform.setTranslation(glm::vec3(_materialPos, 0));
-    textureTransform.setRotation(glm::vec3(0, 0, glm::radians(_materialRot)));
-    textureTransform.setScale(glm::vec3(_materialScale, 1));
-    material->setTextureTransforms(textureTransform);
+    if (_materialMode == MaterialMode::UV) {
+        textureTransform.setTranslation(glm::vec3(_materialPos, 0));
+        textureTransform.setRotation(glm::vec3(0, 0, glm::radians(_materialRot)));
+        textureTransform.setScale(glm::vec3(_materialScale, 1));
+    } else if (_materialMode == MaterialMode::PROJECTED) {
+        textureTransform = getTransform();
+        textureTransform.postScale(getUnscaledDimensions());
+    }
+    material->setTextureTransforms(textureTransform, getMaterialMode());
     material->setPriority(getPriority());
 
     // Our parent could be an entity, an avatar, or an overlay
@@ -346,8 +376,12 @@ void MaterialEntityItem::applyMaterial() {
 }
 
 void MaterialEntityItem::postAdd() {
-    removeMaterial();
-    applyMaterial();
+    // postAdd is called every time we are added to a new octree cell, but we only need to update the material the first time
+    if (!_hasBeenAddedToOctree) {
+        removeMaterial();
+        applyMaterial();
+        _hasBeenAddedToOctree = true;
+    }
 }
 
 void MaterialEntityItem::preDelete() {

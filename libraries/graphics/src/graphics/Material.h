@@ -21,6 +21,8 @@
 
 #include <gpu/Resource.h>
 
+#include "MaterialMode.h"
+
 class Transform;
 
 namespace graphics {
@@ -344,7 +346,7 @@ public:
     class TexMapArraySchema {
     public:
         glm::mat4 _texcoordTransforms[NUM_TEXCOORD_TRANSFORMS];
-        glm::vec4 _lightmapParams{ 0.0, 1.0, 0.0, 0.0 };
+        glm::vec4 _lightmapParamsAndMaterialMode { 0.0, 1.0, 0.0, 0.0 };
         TexMapArraySchema() {}
     };
 
@@ -357,7 +359,7 @@ public:
     void setPriority(quint16 priority) { _priority = priority; }
     quint16 getPriority() { return _priority; }
 
-    void setTextureTransforms(const Transform& transform);
+    void setTextureTransforms(const Transform& transform, MaterialMode mode = MaterialMode::UV);
 
 private:
     mutable MaterialKey _key;

@@ -59,7 +59,7 @@ public:
     void setCurrentMaterialName(const QString& currentMaterialName);
 
     MaterialMode getMaterialMode() const { return _materialMode; }
-    void setMaterialMode(MaterialMode mode) { _materialMode = mode; }
+    void setMaterialMode(MaterialMode mode);
 
     quint16 getPriority() const { return _priority; }
     void setPriority(quint16 priority);
@@ -76,6 +76,8 @@ public:
 
     std::shared_ptr<NetworkMaterial> getMaterial() const;
 
+    void locationChanged(bool tellPhysics) override;
+    void dimensionsChanged() override;
     void setUserData(const QString& userData) override;
     void setParentID(const QUuid& parentID) override;
     void setClientOnly(bool clientOnly) override;
@@ -103,6 +105,7 @@ private:
     QString _currentMaterialName;
 
     bool _retryApply { false };
+    bool _hasBeenAddedToOctree { false };
 
 };
 

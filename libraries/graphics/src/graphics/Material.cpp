@@ -146,8 +146,11 @@ void Material::setTextureMap(MapChannel channel, const TextureMapPointer& textur
     if (channel == MaterialKey::LIGHTMAP_MAP) {
         // update the texcoord1 with lightmap
         _texMapArrayBuffer.edit<TexMapArraySchema>()._texcoordTransforms[1] = (textureMap ? textureMap->getTextureTransform().getMatrix() : glm::mat4());
-        _texMapArrayBuffer.edit<TexMapArraySchema>()._lightmapParams = (textureMap ? glm::vec4(textureMap->getLightmapOffsetScale(), 0.0, 0.0) : glm::vec4(0.0, 1.0, 0.0, 0.0));
+        _texMapArrayBuffer.edit<TexMapArraySchema>()._lightmapParamsAndMaterialMode.x = (textureMap ? textureMap->getLightmapOffsetScale().x : 0.0f);
+        _texMapArrayBuffer.edit<TexMapArraySchema>()._lightmapParamsAndMaterialMode.y = (textureMap ? textureMap->getLightmapOffsetScale().y : 1.0f);
     }
+
+    _texMapArrayBuffer.edit<TexMapArraySchema>()._lightmapParamsAndMaterialMode.y = textureMap ? textureMap->getMaterialMode() : MaterialMode::UV;
 
     _schemaBuffer.edit<Schema>()._key = (uint32)_key._flags.to_ulong();
 
@@ -227,13 +230,15 @@ bool Material::calculateMaterialInfo() const {
     return _hasCalculatedTextureInfo;
 }
 
-void Material::setTextureTransforms(const Transform& transform) {
+void Material::setTextureTransforms(const Transform& transform, MaterialMode mode) {
     for (auto &textureMapItem : _textureMaps) {
         if (textureMapItem.second) {
             textureMapItem.second->setTextureTransform(transform);
+            textureMapItem.second->setMaterialMode(mode);
         }
     }
     for (int i = 0; i < NUM_TEXCOORD_TRANSFORMS; i++) {
         _texMapArrayBuffer.edit<TexMapArraySchema>()._texcoordTransforms[i] = transform.getMatrix();
     }
+    _texMapArrayBuffer.edit<TexMapArraySchema>()._lightmapParamsAndMaterialMode.z = mode;
 }

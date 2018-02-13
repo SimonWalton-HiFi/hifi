@@ -32,10 +32,6 @@ void main(void) {
     // pass along the color in linear space
     _color = colorToLinearRGB(inColor.xyz);
 
-    TexMapArray texMapArray = getTexMapArray();
-    <$evalTexMapArrayTexcoord0(texMapArray, inTexCoord0, _texCoord0)$>
-    <$evalTexMapArrayTexcoord1(texMapArray, inTexCoord1, _texCoord1)$>
-
     // standard transform
     TransformCamera cam = getTransformCamera();
     TransformObject obj = getTransformObject();
@@ -43,4 +39,8 @@ void main(void) {
     <$transformModelToWorldPos(obj, inPosition, _worldPosition)$>
     <$transformModelToWorldDir(cam, obj, inNormal.xyz, _normal)$>
     <$transformModelToWorldDir(cam, obj, inTangent.xyz, _tangent)$>
+
+    TexMapArray texMapArray = getTexMapArray();
+    <$evalTexMapArrayTexcoord0(texMapArray, inTexCoord0, _worldPosition, _texCoord0)$>
+    <$evalTexMapArrayTexcoord1(texMapArray, inTexCoord0, _worldPosition, _texCoord1)$>
 }

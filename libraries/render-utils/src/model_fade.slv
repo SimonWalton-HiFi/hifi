@@ -31,14 +31,14 @@ void main(void) {
     _color = colorToLinearRGB(inColor.xyz);
     _alpha = inColor.w;
 
-    TexMapArray texMapArray = getTexMapArray();
-    <$evalTexMapArrayTexcoord0(texMapArray, inTexCoord0, _texCoord0)$>
-    <$evalTexMapArrayTexcoord1(texMapArray, inTexCoord0, _texCoord1)$>
-
     // standard transform
     TransformCamera cam = getTransformCamera();
     TransformObject obj = getTransformObject();
     <$transformModelToEyeAndClipPos(cam, obj, inPosition, _position, gl_Position)$>
     <$transformModelToWorldPos(obj, inPosition, _worldPosition)$>
     <$transformModelToWorldDir(cam, obj, inNormal.xyz, _normal)$>
+
+    TexMapArray texMapArray = getTexMapArray();
+    <$evalTexMapArrayTexcoord0(texMapArray, inTexCoord0, _worldPosition, _texCoord0)$>
+    <$evalTexMapArrayTexcoord1(texMapArray, inTexCoord0, _worldPosition, _texCoord1)$>
 }

@@ -20,7 +20,7 @@ struct TexMapArray {
 //    mat4 _texcoordTransforms[MAX_TEXCOORDS];
     mat4 _texcoordTransforms0;
     mat4 _texcoordTransforms1;
-    vec4 _lightmapParams;
+    vec4 _lightmapParamsAndMaterialMode;
 };
 
 uniform texMapArrayBuffer {
@@ -31,15 +31,23 @@ TexMapArray getTexMapArray() {
     return _texMapArray;
 }
 
-<@func evalTexMapArrayTexcoord0(texMapArray, inTexcoord0, outTexcoord0)@>
+<@func evalTexMapArrayTexcoord0(texMapArray, inTexcoord0, worldPosition, outTexcoord0)@>
 {
-    <$outTexcoord0$> = (<$texMapArray$>._texcoordTransforms0 * vec4(<$inTexcoord0$>.st, 0.0, 1.0)).st;
+    if (<$texMapArray$>._lightmapParamsAndMaterialMode.z < 0.5) {
+        <$outTexcoord0$> = (<$texMapArray$>._texcoordTransforms0 * vec4(<$inTexcoord0$>.st, 0.0, 1.0)).st;
+    } else {
+        <$outTexcoord0$> = (inverse(<$texMapArray$>._texcoordTransforms0) * <$worldPosition$>).xz + vec2(0.5);
+    }
 }
 <@endfunc@>
 
-<@func evalTexMapArrayTexcoord1(texMapArray, inTexcoord1, outTexcoord1)@>
+<@func evalTexMapArrayTexcoord1(texMapArray, inTexcoord1, worldPosition, outTexcoord1)@>
 {
-    <$outTexcoord1$> = (<$texMapArray$>._texcoordTransforms1 * vec4(<$inTexcoord1$>.st, 0.0, 1.0)).st;
+    if (<$texMapArray$>._lightmapParamsAndMaterialMode.z < 0.5) {
+        <$outTexcoord1$> = (<$texMapArray$>._texcoordTransforms1 * vec4(<$inTexcoord1$>.st, 0.0, 1.0)).st;
+    } else {
+        <$outTexcoord1$> = (inverse(<$texMapArray$>._texcoordTransforms1) * <$worldPosition$>).xz + vec2(0.5);
+    }
 }
 <@endfunc@>
 
@@ -143,7 +151,7 @@ float fetchScatteringMap(vec2 uv) {
 
 uniform sampler2D emissiveMap;
 vec3 fetchLightmapMap(vec2 uv) {
-    vec2 emissiveParams = getTexMapArray()._lightmapParams.xy;
+    vec2 emissiveParams = getTexMapArray()._lightmapParamsAndMaterialMode.xy;
     return (vec3(emissiveParams.x) + emissiveParams.y * texture(emissiveMap, uv).rgb);
 }
 <@endfunc@>

@@ -15,6 +15,8 @@
 
 #include "Transform.h"
 
+#include "MaterialMode.h"
+
 namespace graphics {
 
 class TextureMap {
@@ -30,6 +32,9 @@ public:
     void setTextureTransform(const Transform& texcoordTransform);
     const Transform& getTextureTransform() const { return _texcoordTransform; }
 
+    void setMaterialMode(MaterialMode mode) { _materialMode = mode; }
+    MaterialMode getMaterialMode() const { return _materialMode; }
+
     void setUseAlphaChannel(bool useAlpha) { _useAlphaChannel = useAlpha; }
     bool useAlphaChannel() const { return _useAlphaChannel; }
 
@@ -41,6 +46,7 @@ protected:
 
     Transform _texcoordTransform;
     glm::vec2 _lightmapOffsetScale{ 0.0f, 1.0f };
+    MaterialMode _materialMode;
 
     bool _useAlphaChannel{ false };
 };

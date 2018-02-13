@@ -772,12 +772,9 @@
                 </div>
             </fieldset>
             <fieldset class="minor">
-                <div class="material-group material-section property dropdown">
-                    <label>Material mode </label>
-                    <select name="SelectMaterialMode" id="property-material-mode">
-                        <option value="uv">UV space material</option>
-                        <option value="projected">3D projected material</option>
-                    </select>
+                <div class="material-group material-section property text">
+                    <label>Parent Material ID </label>
+                    <input type="text" id="property-parent-material-id">
                 </div>
 
                 <div class="material-group material-section property number">
@@ -785,12 +782,15 @@
                     <input type="number" id="property-priority" min="0">
                 </div>
 
-                <div class="material-group material-section property text">
-                    <label>Parent Material ID </label>
-                    <input type="text" id="property-parent-material-id">
-                </div>
-
                 <fieldset>
+                    <div class="material-group material-section property dropdown">
+                        <label>Material mode </label>
+                        <select name="SelectMaterialMode" id="property-material-mode">
+                            <option value="uv">UV space material</option>
+                            <option value="projected">3D projected material</option>
+                        </select>
+                    </div>
+
                     <div class="material-group material-section property xy fstuple">
                         <label>Material Position </label>
                         <div class="tuple">
