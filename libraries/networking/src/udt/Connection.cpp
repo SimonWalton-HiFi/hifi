@@ -576,8 +576,9 @@ void Connection::processControl(ControlPacketPointer controlPacket) {
                 // where the other end expired our connection. Let's reset.
 
 #ifdef UDT_CONNECTION_DEBUG
-                qCDebug(networking) << "Got handshake request, stopping SendQueue";
+                qCDebug(networking) << "Got HandshakeRequest from" << _destination << ", stopping SendQueue";
 #endif
+                _hasReceivedHandshakeACK = false;
                 stopSendQueue();
             }
             break;
@@ -891,6 +892,10 @@ void Connection::resetReceiveState() {
         _parentSocket->messageFailed(this, pendingMessage.first);
     }
     _pendingReceivedMessages.clear();
+
+#ifdef UDT_CONNECTION_DEBUG
+    qCDebug(networking) << "Reset connection to" << _destination;
+#endif
 }
 
 void Connection::updateRTT(int rtt) {
