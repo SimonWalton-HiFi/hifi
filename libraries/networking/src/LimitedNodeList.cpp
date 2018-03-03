@@ -617,7 +617,7 @@ void LimitedNodeList::handleNodeKill(const SharedNodePointer& node) {
     emit nodeKilled(node);
 
     if (auto activeSocket = node->getActiveSocket()) {
-        _nodeSocket.cleanupConnection(*activeSocket);
+        //_nodeSocket.cleanupConnection(*activeSocket);
     }
 }
 
