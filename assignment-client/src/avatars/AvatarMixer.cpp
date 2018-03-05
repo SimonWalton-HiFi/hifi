@@ -605,7 +605,10 @@ void AvatarMixer::handleAvatarIdentityPacket(QSharedPointer<ReceivedMessage> mes
 
 void AvatarMixer::handleKillAvatarPacket(QSharedPointer<ReceivedMessage> message, SharedNodePointer node) {
     auto start = usecTimestampNow();
-    DependencyManager::get<NodeList>()->processKillNode(*message);
+    node->stopPingTimer();
+    emit(DependencyManager::get<NodeList>()->nodeKilled(node));
+    node->setLinkedData(nullptr);
+    //DependencyManager::get<NodeList>()->processKillNode(*message);
     auto end = usecTimestampNow();
     _handleKillAvatarPacketElapsedTime += (end - start);
 
