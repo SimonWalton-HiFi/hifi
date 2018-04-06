@@ -404,6 +404,7 @@ public:
         // Give the heartbeat an initial value
         _heartbeat = usecTimestampNow();
         _paused = false;
+        _warningGiven = false;
         connect(qApp, &QCoreApplication::aboutToQuit, [this] {
             _quit = true;
         });
@@ -450,42 +451,47 @@ public:
 
             if (elapsedMovingAverage > _maxElapsedAverage) {
                 qCDebug(interfaceapp_deadlock) << "DEADLOCK WATCHDOG WARNING:"
-                    << "lastHeartbeatAge:" << lastHeartbeatAge
-                    << "elapsedMovingAverage:" << elapsedMovingAverage
-                    << "maxElapsed:" << _maxElapsed
-                    << "PREVIOUS maxElapsedAverage:" << _maxElapsedAverage
-                    << "NEW maxElapsedAverage:" << elapsedMovingAverage << "** NEW MAX ELAPSED AVERAGE **"
+                    << "lastHeartbeatAge:" << lastHeartbeatAge / USECS_PER_MSEC
+                    << "ms elapsedMovingAverage:" << elapsedMovingAverage / USECS_PER_MSEC
+                    << "ms maxElapsed:" << _maxElapsed
+                    << "PREVIOUS maxElapsedAverage:" << _maxElapsedAverage / USECS_PER_MSEC
+                    << "ms NEW maxElapsedAverage:" << elapsedMovingAverage / USECS_PER_MSEC << "ms ** NEW MAX ELAPSED AVERAGE **"
                     << "samples:" << _movingAverage.getSamples();
                 _maxElapsedAverage = elapsedMovingAverage;
             }
             if (lastHeartbeatAge > _maxElapsed) {
                 qCDebug(interfaceapp_deadlock) << "DEADLOCK WATCHDOG WARNING:"
-                    << "lastHeartbeatAge:" << lastHeartbeatAge
-                    << "elapsedMovingAverage:" << elapsedMovingAverage
-                    << "PREVIOUS maxElapsed:" << _maxElapsed
-                    << "NEW maxElapsed:" << lastHeartbeatAge << "** NEW MAX ELAPSED **"
-                    << "maxElapsedAverage:" << _maxElapsedAverage
-                    << "samples:" << _movingAverage.getSamples();
+                    << "ms lastHeartbeatAge:" << lastHeartbeatAge / USECS_PER_MSEC
+                    << "ms elapsedMovingAverage:" << elapsedMovingAverage / USECS_PER_MSEC
+                    << "ms PREVIOUS maxElapsed:" << _maxElapsed / USECS_PER_MSEC
+                    << "ms NEW maxElapsed:" << lastHeartbeatAge / USECS_PER_MSEC << "ms ** NEW MAX ELAPSED **"
+                    << "maxElapsedAverage:" << _maxElapsedAverage / USECS_PER_MSEC
+                    << "ms samples:" << _movingAverage.getSamples();
                 _maxElapsed = lastHeartbeatAge;
+                _warningGiven = true;
+            } else if (_warningGiven) {
+                qCDebug(interfaceapp_deadlock) << "DEADLOCK WATCHDOG WARNING: ** WATCHDOG RECOVERED **";
+                _warningGiven = false;
             }
+
             if (elapsedMovingAverage > WARNING_ELAPSED_HEARTBEAT) {
                 qCDebug(interfaceapp_deadlock) << "DEADLOCK WATCHDOG WARNING:"
-                    << "lastHeartbeatAge:" << lastHeartbeatAge
-                    << "elapsedMovingAverage:" << elapsedMovingAverage << "** OVER EXPECTED VALUE **"
-                    << "maxElapsed:" << _maxElapsed
-                    << "maxElapsedAverage:" << _maxElapsedAverage
-                    << "samples:" << _movingAverage.getSamples();
+                    << "lastHeartbeatAge:" << lastHeartbeatAge / USECS_PER_MSEC
+                    << "ms elapsedMovingAverage:" << elapsedMovingAverage / USECS_PER_MSEC << "ms ** OVER EXPECTED VALUE **"
+                    << "maxElapsed:" << _maxElapsed / USECS_PER_MSEC
+                    << "ms maxElapsedAverage:" << _maxElapsedAverage / USECS_PER_MSEC
+                    << "ms samples:" << _movingAverage.getSamples();
             }
 
             if (lastHeartbeatAge > MAX_HEARTBEAT_AGE_USECS) {
                 qCDebug(interfaceapp_deadlock) << "DEADLOCK DETECTED -- "
-                         << "lastHeartbeatAge:" << lastHeartbeatAge
-                         << "[ lastHeartbeat :" << lastHeartbeat
-                         << "now:" << now << " ]"
-                         << "elapsedMovingAverage:" << elapsedMovingAverage
-                         << "maxElapsed:" << _maxElapsed
-                         << "maxElapsedAverage:" << _maxElapsedAverage
-                         << "samples:" << _movingAverage.getSamples();
+                         << "lastHeartbeatAge:" << lastHeartbeatAge / USECS_PER_MSEC
+                         << "ms [ lastHeartbeat :" << lastHeartbeat / USECS_PER_MSEC
+                         << "ms now:" << now / USECS_PER_MSEC << "ms ]"
+                         << "elapsedMovingAverage:" << elapsedMovingAverage / USECS_PER_MSEC
+                         << "ms maxElapsed:" << _maxElapsed / USECS_PER_MSEC
+                         << "ms maxElapsedAverage:" << _maxElapsedAverage / USECS_PER_MSEC
+                         << "ms samples:" << _movingAverage.getSamples();
 
                 // Don't actually crash in debug builds, in case this apparent deadlock is simply from
                 // the developer actively debugging code
@@ -503,6 +509,7 @@ public:
     static std::atomic<uint64_t> _maxElapsed;
     static std::atomic<int> _maxElapsedAverage;
     static ThreadSafeMovingAverage<int, HEARTBEAT_SAMPLES> _movingAverage;
+    static std::atomic<bool> _warningGiven;
 
     bool _quit { false };
 };
@@ -512,6 +519,7 @@ std::atomic<uint64_t> DeadlockWatchdogThread::_heartbeat;
 std::atomic<uint64_t> DeadlockWatchdogThread::_maxElapsed;
 std::atomic<int> DeadlockWatchdogThread::_maxElapsedAverage;
 ThreadSafeMovingAverage<int, DeadlockWatchdogThread::HEARTBEAT_SAMPLES> DeadlockWatchdogThread::_movingAverage;
+std::atomic<bool> DeadlockWatchdogThread::_warningGiven;
 
 bool isDomainURL(QUrl url) {
     if (!url.isValid()) {
