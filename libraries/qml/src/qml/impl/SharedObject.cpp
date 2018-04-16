@@ -37,9 +37,8 @@ static const int MIN_TIMER_MS = 5;
 using namespace hifi::qml;
 using namespace hifi::qml::impl;
 
-TextureCache offscreenTextures;
-
 TextureCache& SharedObject::getTextureCache() {
+    static TextureCache offscreenTextures;
     return offscreenTextures;
 }
 
@@ -247,7 +246,7 @@ void SharedObject::releaseTextureAndFence() {
     QMutexLocker lock(&_mutex);
     // If the most recent texture was unused, we can directly recycle it
     if (_latestTextureAndFence.first) {
-        offscreenTextures.releaseTexture(_latestTextureAndFence);
+        getTextureCache().releaseTexture(_latestTextureAndFence);
         _latestTextureAndFence = TextureAndFence{ 0, 0 };
     }
 }
@@ -311,7 +310,10 @@ bool SharedObject::preRender() {
 void SharedObject::shutdownRendering(OffscreenGLCanvas& canvas, const QSize& size) {
     QMutexLocker locker(&_mutex);
     if (size != QSize(0, 0)) {
-        offscreenTextures.releaseSize(size);
+        getTextureCache().releaseSize(size);
+        if (_latestTextureAndFence.first) {
+            getTextureCache().releaseTexture(_latestTextureAndFence);
+        }
     }
     _renderControl->invalidate();
     canvas.doneCurrent();
@@ -407,7 +409,7 @@ void SharedObject::onRender() {
 }
 
 void SharedObject::onTimer() {
-    offscreenTextures.report();
+    getTextureCache().report();
     if (!_renderRequested) {
         return;
     }
@@ -440,7 +442,7 @@ void SharedObject::updateTextureAndFence(const TextureAndFence& newTextureAndFen
     QMutexLocker locker(&_mutex);
     // If the most recent texture was unused, we can directly recycle it
     if (_latestTextureAndFence.first) {
-        offscreenTextures.releaseTexture(_latestTextureAndFence);
+        getTextureCache().releaseTexture(_latestTextureAndFence);
         _latestTextureAndFence = { 0, 0 };
     }
 

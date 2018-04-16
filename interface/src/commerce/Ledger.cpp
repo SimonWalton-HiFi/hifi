@@ -35,12 +35,19 @@ QJsonObject Ledger::apiResponse(const QString& label, QNetworkReply& reply) {
 QJsonObject Ledger::failResponse(const QString& label, QNetworkReply& reply) {
     QString response = reply.readAll();
     qWarning(commerce) << "FAILED" << label << response;
-    QJsonObject result
-    {
-        { "status", "fail" },
-        { "message", response }
-    };
-    return result;
+
+    // tempResult will be NULL if the response isn't valid JSON.
+    QJsonDocument tempResult = QJsonDocument::fromJson(response.toLocal8Bit());
+    if (tempResult.isNull()) {
+        QJsonObject result
+        {
+            { "status", "fail" },
+            { "message", response }
+        };
+        return result;
+    } else {
+        return tempResult.object();
+    }
 }
 #define ApiHandler(NAME) void Ledger::NAME##Success(QNetworkReply& reply) { emit NAME##Result(apiResponse(#NAME, reply)); }
 #define FailHandler(NAME) void Ledger::NAME##Failure(QNetworkReply& reply) { emit NAME##Result(failResponse(#NAME, reply)); }
@@ -293,7 +300,7 @@ void Ledger::account() {
 // The api/failResponse is called just for the side effect of logging.
 void Ledger::updateLocationSuccess(QNetworkReply& reply) { apiResponse("updateLocation", reply); }
 void Ledger::updateLocationFailure(QNetworkReply& reply) { failResponse("updateLocation", reply); }
-void Ledger::updateLocation(const QString& asset_id, const QString location, const bool controlledFailure) {
+void Ledger::updateLocation(const QString& asset_id, const QString& location, const bool& alsoUpdateSiblings, const bool controlledFailure) {
     auto wallet = DependencyManager::get<Wallet>();
     auto walletScriptingInterface = DependencyManager::get<WalletScriptingInterface>();
     uint walletStatus = walletScriptingInterface->getWalletStatus();
@@ -308,6 +315,9 @@ void Ledger::updateLocation(const QString& asset_id, const QString location, con
             QJsonObject transaction;
             transaction["certificate_id"] = asset_id;
             transaction["place_name"] = location;
+            if (alsoUpdateSiblings) {
+                transaction["also_update_siblings"] = true;
+            }
             QJsonDocument transactionDoc{ transaction };
             auto transactionString = transactionDoc.toJson(QJsonDocument::Compact);
             signedSend("transaction", transactionString, key, "location", "updateLocationSuccess", "updateLocationFailure", controlledFailure);
@@ -334,7 +344,9 @@ void Ledger::certificateInfoSuccess(QNetworkReply& reply) {
     qInfo(commerce) << "certificateInfo" << "response" << QJsonDocument(replyObject).toJson(QJsonDocument::Compact);
     emit certificateInfoResult(replyObject);
 }
-void Ledger::certificateInfoFailure(QNetworkReply& reply) { failResponse("certificateInfo", reply); }
+void Ledger::certificateInfoFailure(QNetworkReply& reply) {
+    emit certificateInfoResult(failResponse("certificateInfo", reply));
+}
 void Ledger::certificateInfo(const QString& certificateId) {
     QString endpoint = "proof_of_purchase_status/transfer";
     QJsonObject request;
