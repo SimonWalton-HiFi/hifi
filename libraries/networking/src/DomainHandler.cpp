@@ -28,6 +28,7 @@
 #include "SharedUtil.h"
 #include "UserActivityLogger.h"
 #include "NetworkLogging.h"
+#include "Profile.h"
 
 DomainHandler::DomainHandler(QObject* parent) :
     QObject(parent),
@@ -284,6 +285,7 @@ void DomainHandler::setIsConnected(bool isConnected) {
         _isConnected = isConnected;
 
         if (_isConnected) {
+            PROFILE_SYNC_BEGIN(network, "DomainConnected", QString());
             emit connectedToDomain(_domainURL);
 
             if (_domainURL.scheme() == URL_SCHEME_HIFI && !_domainURL.host().isEmpty()) {
@@ -293,6 +295,7 @@ void DomainHandler::setIsConnected(bool isConnected) {
 
         } else {
             emit disconnectedFromDomain();
+            PROFILE_SYNC_END(network, "DomainConnected", QString());
         }
     }
 }
