@@ -235,7 +235,9 @@ void NodeList::reset(bool skipDomainHandlerReset) {
         QMetaObject::invokeMethod(this, "reset", Q_ARG(bool, skipDomainHandlerReset));
         return;
     }
-
+    if (_nodeSocket.InputPacketsPending()) {
+        qCDebug(networking) << "NodeList reset while input packets pending";
+    }
     LimitedNodeList::reset();
 
     // lock and clear our set of ignored IDs

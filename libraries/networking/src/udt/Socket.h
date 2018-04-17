@@ -88,6 +88,8 @@ public:
     
     StatsVector sampleStatsForAllConnections();
 
+    bool InputPacketsPending() const { return _udpSocket.hasPendingDatagrams(); }
+
 #if (PR_BUILD || DEV_BUILD)
     void sendFakedHandshakeRequest(const HifiSockAddr& sockAddr);
 #endif
