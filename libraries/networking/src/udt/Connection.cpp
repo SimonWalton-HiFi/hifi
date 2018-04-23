@@ -30,6 +30,8 @@
 using namespace udt;
 using namespace std::chrono;
 
+#define UDT_CONNECTION_DEBUG
+
 Connection::Connection(Socket* parentSocket, HifiSockAddr destination, std::unique_ptr<CongestionControl> congestionControl) :
     _parentSocket(parentSocket),
     _destination(destination),
@@ -80,6 +82,10 @@ Connection::~Connection() {
     for (auto& pendingMessage : _pendingReceivedMessages) {
         _parentSocket->messageFailed(this, pendingMessage.first);
     }
+
+#ifdef UDT_CONNECTION_DEBUG
+    qCDebug(networking) << sampleStats();
+#endif
 }
 
 void Connection::stopSendQueue() {

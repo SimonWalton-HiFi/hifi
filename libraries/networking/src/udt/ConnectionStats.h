@@ -101,4 +101,7 @@ private:
     
 }
 
+class QDebug;
+QDebug& operator<<(QDebug& debug, udt::ConnectionStats::Stats& stats);
+
 #endif // hifi_ConnectionStats_h
