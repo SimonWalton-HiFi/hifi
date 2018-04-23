@@ -114,7 +114,7 @@ void ConnectionStats::recordPacketSendPeriod(int sample) {
     _total.packetSendPeriod = (int)((_total.packetSendPeriod * EWMA_PREVIOUS_SAMPLES_WEIGHT) + (sample * EWMA_CURRENT_SAMPLE_WEIGHT));
 }
 
-QDebug& operator<<(QDebug& debug, udt::ConnectionStats::Stats& stats) {
+QDebug& operator<<(QDebug& debug, const udt::ConnectionStats::Stats& stats) {
     debug << "Connection stats:\n";
 #define HIFI_LOG_EVENT(x) << "    " #x " events: " << stats.events[ConnectionStats::Stats::Event::x] << "\n"
     debug
