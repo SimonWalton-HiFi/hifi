@@ -110,6 +110,8 @@ public:
     Q_ENUM(ConnectionStep);
     QUuid getSessionUUID() const;
     void setSessionUUID(const QUuid& sessionUUID);
+    Node::LocalID getSessionLocalID() const;
+    void setSessionLocalID(Node::LocalID localID);
 
     void setPermissions(const NodePermissions& newPermissions);
     bool isAllowedEditor() const { return _permissions.can(NodePermissions::Permission::canAdjustLocks); }
@@ -130,22 +132,25 @@ public:
 
     virtual bool isDomainServer() const { return true; }
     virtual QUuid getDomainUUID() const { assert(false); return QUuid(); }
+    virtual Node::LocalID getDomainLocalID() const { assert(false); return Node::NULL_LOCAL_ID; }
     virtual HifiSockAddr getDomainSockAddr() const { assert(false); return HifiSockAddr(); }
 
     // use sendUnreliablePacket to send an unreliable packet (that you do not need to move)
     // either to a node (via its active socket) or to a manual sockaddr
     qint64 sendUnreliablePacket(const NLPacket& packet, const Node& destinationNode);
-    qint64 sendUnreliablePacket(const NLPacket& packet, const HifiSockAddr& sockAddr, HMACAuth* hmacAuth = nullptr);
+    qint64 sendUnreliablePacket(const NLPacket& packet, const HifiSockAddr& sockAddr,
+                                const QUuid& connectionSecret = QUuid());
 
     // use sendPacket to send a moved unreliable or reliable NL packet to a node's active socket or manual sockaddr
     qint64 sendPacket(std::unique_ptr<NLPacket> packet, const Node& destinationNode);
-    qint64 sendPacket(std::unique_ptr<NLPacket> packet, const HifiSockAddr& sockAddr, HMACAuth* hmacAuth = nullptr);
+    qint64 sendPacket(std::unique_ptr<NLPacket> packet, const HifiSockAddr& sockAddr,
+                      const QUuid& connectionSecret = QUuid());
 
     // use sendUnreliableUnorderedPacketList to unreliably send separate packets from the packet list
     // either to a node's active socket or to a manual sockaddr
     qint64 sendUnreliableUnorderedPacketList(NLPacketList& packetList, const Node& destinationNode);
     qint64 sendUnreliableUnorderedPacketList(NLPacketList& packetList, const HifiSockAddr& sockAddr,
-        HMACAuth* hmacAuth = nullptr);
+                          const QUuid& connectionSecret = QUuid());
 
     // use sendPacketList to send reliable packet lists (ordered or unordered) to a node's active socket
     // or to a manual sock addr
@@ -157,11 +162,12 @@ public:
     size_t size() const { QReadLocker readLock(&_nodeMutex); return _nodeHash.size(); }
 
     SharedNodePointer nodeWithUUID(const QUuid& nodeUUID);
+    SharedNodePointer nodeWithLocalID(Node::LocalID localID) const;
 
     SharedNodePointer addOrUpdateNode(const QUuid& uuid, NodeType_t nodeType,
                                       const HifiSockAddr& publicSocket, const HifiSockAddr& localSocket,
-                                      bool isReplicated = false, bool isUpstream = false,
-                                      const QUuid& connectionSecret = QUuid(),
+                                      Node::LocalID localID = Node::NULL_LOCAL_ID, bool isReplicated = false,
+                                      bool isUpstream = false, const QUuid& connectionSecret = QUuid(),
                                       const NodePermissions& permissions = DEFAULT_AGENT_PERMISSIONS);
 
     static bool parseSTUNResponse(udt::BasePacket* packet, QHostAddress& newPublicAddress, uint16_t& newPublicPort);
@@ -366,7 +372,7 @@ protected:
     qint64 writePacket(const NLPacket& packet, const HifiSockAddr& destinationSockAddr,
                        const QUuid& connectionSecret = QUuid());
     void collectPacketStats(const NLPacket& packet);
-    void fillPacketHeader(const NLPacket& packet, HMACAuth* hmacAuth = nullptr);
+    void fillPacketHeader(const NLPacket& packet, const QUuid& connectionSecret = QUuid());
 
     void setLocalSocket(const HifiSockAddr& sockAddr);
 
@@ -430,6 +436,9 @@ private slots:
 private:
     mutable QReadWriteLock _sessionUUIDLock;
     QUuid _sessionUUID;
+    using LocalIDMapping = tbb::concurrent_unordered_map<Node::LocalID, SharedNodePointer>;
+    LocalIDMapping _localIDMap;
+    Node::LocalID _sessionLocalID { 0 };
 };
 
 #endif // hifi_LimitedNodeList_h
