@@ -424,6 +424,8 @@ void NodeList::sendDomainServerCheckIn() {
         sendPacket(std::move(domainPacket), _domainHandler.getSockAddr());
 
         // let the domain handler know we sent another check in or connect packet
+
+        qCDebug(networking) << "Sent check-in packet: " << domainPacketType;
         _domainHandler.sentCheckInPacket();
     }
 }
