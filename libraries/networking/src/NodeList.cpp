@@ -292,6 +292,7 @@ void NodeList::addSetOfNodeTypesToNodeInterestSet(const NodeSet& setOfNodeTypes)
 
 void NodeList::sendDomainServerCheckIn() {
     if (thread() != QThread::currentThread()) {
+        qCDebug(networking) << "sendDomainServerCheckIn() called from another thread";
         QMetaObject::invokeMethod(this, "sendDomainServerCheckIn", Qt::QueuedConnection);
         return;
     }
@@ -425,7 +426,6 @@ void NodeList::sendDomainServerCheckIn() {
 
         // let the domain handler know we sent another check in or connect packet
 
-        qCDebug(networking) << "Sent check-in packet: " << domainPacketType;
         _domainHandler.sentCheckInPacket();
     }
 }
