@@ -20,11 +20,6 @@
 #include <FBXReader.h>
 #include <ResourceCache.h>
 
-/**jsdoc
- * API to manage Animation Cache resources
- * @namespace AnimationCache
- */
-
 class Animation;
 
 typedef QSharedPointer<Animation> AnimationPointer;
@@ -35,79 +30,65 @@ class AnimationCache : public ResourceCache, public Dependency  {
     SINGLETON_DEPENDENCY
 
 public:
-    // Copied over from ResourceCache (see ResourceCache.h for reason)
+
+    // Properties are copied over from ResourceCache (see ResourceCache.h for reason).
 
     /**jsdoc
+     * API to manage animation cache resources.
      * @namespace AnimationCache
-     * @property numTotal {number} total number of total resources
-     * @property numCached {number} total number of cached resource
-     * @property sizeTotal {number} size in bytes of all resources
-     * @property sizeCached {number} size in bytes of all cached resources
+     *
+     * @hifi-interface
+     * @hifi-client-entity
+     * @hifi-assignment-client
+     *
+     * @property {number} numTotal - Total number of total resources. <em>Read-only.</em>
+     * @property {number} numCached - Total number of cached resource. <em>Read-only.</em>
+     * @property {number} sizeTotal - Size in bytes of all resources. <em>Read-only.</em>
+     * @property {number} sizeCached - Size in bytes of all cached resources. <em>Read-only.</em>
      */
 
-    /**jsdoc
-     * Returns the total number of resources
-     * @function AnimationCache.getNumTotalResources
-     * @returns {number}
-     */
+    // Functions are copied over from ResourceCache (see ResourceCache.h for reason).
 
     /**jsdoc
-     * Returns the total size in bytes of all resources
-     * @function AnimationCache.getSizeTotalResources
-     * @returns {number}
-     */
-
-    /**jsdoc
-     * Returns the total number of cached resources
-     * @function AnimationCache.getNumCachedResources
-     * @returns {number}
-     */
-
-    /**jsdoc
-     * Returns the total size in bytes of cached resources
-     * @function AnimationCache.getSizeCachedResources
-     * @returns {number}
-     */
-
-    /**jsdoc
-     * Returns list of all resource urls
+     * Get the list of all resource URLs.
      * @function AnimationCache.getResourceList
      * @returns {string[]}
      */
 
     /**jsdoc
-     * Asynchronously loads a resource from the spedified URL and returns it.
-     * @param url {string} url of resource to load
-     * @param fallback {string} fallback URL if load of the desired url fails
-     * @function AnimationCache.getResource
-     * @returns {Resource}
+     * @function AnimationCache.dirty
+     * @returns {Signal}
      */
-    
+
+    /**jsdoc
+     * @function AnimationCache.updateTotalSize
+     * @param {number} deltaSize
+     */
+
     /**jsdoc
      * Prefetches a resource.
-     * @param url {string} url of resource to load
      * @function AnimationCache.prefetch
+     * @param {string} url - URL of the resource to prefetch.
+     * @param {object} [extra=null]
      * @returns {Resource}
      */
 
     /**jsdoc
-     * @param {number} deltaSize
-     * @function AnimationCache.updateTotalSize
+     * Asynchronously loads a resource from the specified URL and returns it.
+     * @function AnimationCache.getResource
+     * @param {string} url - URL of the resource to load.
+     * @param {string} [fallback=""] - Fallback URL if load of the desired URL fails.
+     * @param {} [extra=null]
      * @returns {Resource}
      */
 
-    /**jsdoc
-     * @function AnimationCache.dirty
-     * @returns {Signal} 
-     */
 
     /**jsdoc
-     * Returns animation resource for particular animation
+     * Returns animation resource for particular animation.
      * @function AnimationCache.getAnimation
-     * @param url {string} url to load
+     * @param {string} url - URL to load.
      * @returns {Resource} animation
      */
-
     Q_INVOKABLE AnimationPointer getAnimation(const QString& url) { return getAnimation(QUrl(url)); }
     Q_INVOKABLE AnimationPointer getAnimation(const QUrl& url);
 

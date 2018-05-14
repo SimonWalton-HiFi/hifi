@@ -21,11 +21,6 @@
 #include "FBXReader.h"
 #include "TextureCache.h"
 
-/**jsdoc
-*  API to manage Model Cache resources
-*  @namespace ModelCache
-*/
-
 // Alias instead of derive to avoid copying
 
 class NetworkTexture;
@@ -60,6 +55,7 @@ public:
 
     virtual bool areTexturesLoaded() const;
     const QUrl& getAnimGraphOverrideUrl() const { return _animGraphOverrideUrl; }
+    const QVariantHash& getMapping() const { return _mapping; }
 
 protected:
     friend class GeometryMappingResource;
@@ -73,6 +69,7 @@ protected:
     NetworkMaterials _materials;
 
     QUrl _animGraphOverrideUrl;
+    QVariantHash _mapping;  // parsed contents of FST file.
 
 private:
     mutable bool _areTexturesLoaded { false };
@@ -141,72 +138,59 @@ class ModelCache : public ResourceCache, public Dependency {
     Q_OBJECT
     SINGLETON_DEPENDENCY
 
-
 public:
 
-    /**jsdoc
-    *  @namespace ModelCache
-    *  @property numTotal {number} total number of total resources
-    *  @property numCached {number} total number of cached resource
-    *  @property sizeTotal {number} size in bytes of all resources
-    *  @property sizeCached {number} size in bytes of all cached resources
-    */
+    // Properties are copied over from ResourceCache (see ResourceCache.h for reason).
 
     /**jsdoc
-    *  Returns the total number of resources
-    *  @function ModelCache.getNumTotalResources
-    *  @returns {number}
-    */
+     * API to manage model cache resources.
+     * @namespace ModelCache
+     *
+     * @hifi-interface
+     * @hifi-client-entity
+     *
+     * @property {number} numTotal - Total number of total resources. <em>Read-only.</em>
+     * @property {number} numCached - Total number of cached resource. <em>Read-only.</em>
+     * @property {number} sizeTotal - Size in bytes of all resources. <em>Read-only.</em>
+     * @property {number} sizeCached - Size in bytes of all cached resources. <em>Read-only.</em>
+     */
+
+
+    // Functions are copied over from ResourceCache (see ResourceCache.h for reason).
 
     /**jsdoc
-    *  Returns the total size in bytes of all resources
-    *  @function ModelCache.getSizeTotalResources
-    *  @returns {number}
-    */
+     * Get the list of all resource URLs.
+     * @function ModelCache.getResourceList
+     * @returns {string[]}
+     */
 
     /**jsdoc
-    *  Returns the total number of cached resources
-    *  @function ModelCache.getNumCachedResources
-    *  @returns {number}
-    */
+     * @function ModelCache.dirty
+     * @returns {Signal}
+     */
 
     /**jsdoc
-    *  Returns the total size in bytes of cached resources
-    *  @function ModelCache.getSizeCachedResources
-    *  @returns {number}
-    */
+     * @function ModelCache.updateTotalSize
+     * @param {number} deltaSize
+     */
 
     /**jsdoc
-    *  Returns list of all resource urls
-    *  @function ModelCache.getResourceList
-    *  @returns {string[]}
-    */
+     * Prefetches a resource.
+     * @function ModelCache.prefetch
+     * @param {string} url - URL of the resource to prefetch.
+     * @param {object} [extra=null]
+     * @returns {Resource}
+     */
 
     /**jsdoc
-    *  Asynchronously loads a resource from the spedified URL and returns it.
-    *  @param url {string} url of resource to load
-    *  @param fallback {string} fallback URL if load of the desired url fails
-    *  @function ModelCache.getResource
-    *  @returns {Resource}
-    */
+     * Asynchronously loads a resource from the specified URL and returns it.
+     * @function ModelCache.getResource
+     * @param {string} url - URL of the resource to load.
+     * @param {string} [fallback=""] - Fallback URL if load of the desired URL fails.
+     * @param {} [extra=null]
+     * @returns {Resource}
+     */
 
-    /**jsdoc
-    *  Prefetches a resource.
-    *  @param url {string} url of resource to load
-    *  @function ModelCache.prefetch
-    *  @returns {Resource}
-    */
-
-    /**jsdoc
-    *  @param {number} deltaSize
-    *  @function ModelCache.updateTotalSize
-    *  @returns {Resource}
-    */
-
-    /**jsdoc
-    *  @function ModelCache.dirty
-    *  @returns {Signal}
-    */
 
     GeometryResource::Pointer getGeometryResource(const QUrl& url,
                                                   const QVariantHash& mapping = QVariantHash(),

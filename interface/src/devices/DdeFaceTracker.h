@@ -29,6 +29,9 @@
 /**jsdoc 
  * The FaceTracker API helps manage facial tracking hardware. 
  * @namespace FaceTracker
+ *
+ * @hifi-interface
+ * @hifi-client-entity
  */
 
 class DdeFaceTracker : public FaceTracker, public Dependency {
@@ -67,13 +70,11 @@ public slots:
      * @function FaceTracker.setEnabled
      * @param {boolean} enabled
      */
-
     void setEnabled(bool enabled) override;
 
     /**jsdoc
      * @function FaceTracker.calibrate
      */
-
     void calibrate();
 
 private slots:
