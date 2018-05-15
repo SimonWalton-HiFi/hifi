@@ -503,12 +503,7 @@ bool ResourceCache::attemptHighestPriorityRequest() {
     return (resource && attemptRequest(resource));
 }
 
-#if !defined(Q_OS_ANDROID)
 const int DEFAULT_REQUEST_LIMIT = 10;
-#else
-const int DEFAULT_REQUEST_LIMIT = 3;
-#endif
-
 int ResourceCache::_requestLimit = DEFAULT_REQUEST_LIMIT;
 int ResourceCache::_requestsActive = 0;
 
