@@ -1309,7 +1309,7 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer, bo
 #if !defined(Q_OS_ANDROID)
         concurrentDownloads = MAX_CONCURRENT_RESOURCE_DOWNLOADS;
 #else
-        concurrentDownloads = 3;
+        concurrentDownloads = 4;
 #endif
     }
     ResourceCache::setRequestLimit(concurrentDownloads);
