@@ -36,7 +36,7 @@
 #include "UserActivityLogger.h"
 
 
-const bool VERBOSE_HTTP_REQUEST_DEBUGGING = false;
+const bool VERBOSE_HTTP_REQUEST_DEBUGGING = true;
 
 Q_DECLARE_METATYPE(OAuthAccessToken)
 Q_DECLARE_METATYPE(DataServerAccountInfo)
@@ -813,6 +813,8 @@ void AccountManager::processGeneratedKeypair() {
                           QVariant("form-data; name=\"public_key\"; filename=\"public_key\""));
         publicKeyPart.setBody(keypairGenerator->getPublicKey());
         requestMultiPart->append(publicKeyPart);
+
+        qCWarning(networking) << "Uploading public key: " << keypairGenerator->getPublicKey().toHex();
 
         if (!domainID.isNull()) {
             const auto& key = getTemporaryDomainKey(domainID);

@@ -691,6 +691,7 @@ void DomainGatekeeper::publicKeyJSONCallback(QNetworkReply& requestReply) {
         const QString JSON_PUBLIC_KEY_KEY = "public_key";
 
         qDebug().nospace() << "Extracted " << (isOptimisticKey ? "optimistic " : " ") << "public key for " << username.toLower();
+        qDebug() << "Public key is " << QByteArray::fromBase64(jsonObject[JSON_DATA_KEY].toObject()[JSON_PUBLIC_KEY_KEY].toString().toUtf8()).toHex();
 
         _userPublicKeys[username.toLower()] =
             {
