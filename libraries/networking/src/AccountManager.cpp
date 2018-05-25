@@ -743,6 +743,8 @@ void AccountManager::generateNewKeypair(bool isUserKeypair, const QUuid& domainI
         return;
     }
 
+    QSslConfiguration::defaultConfiguration();
+
     // make sure we don't already have an outbound keypair generation request
     if (!_isWaitingForKeypairResponse) {
         _isWaitingForKeypairResponse = true;
@@ -815,13 +817,15 @@ void AccountManager::processGeneratedKeypair() {
         requestMultiPart->append(publicKeyPart);
 
         if (!domainID.isNull()) {
-            const auto& key = getTemporaryDomainKey(domainID);
-            QHttpPart apiKeyPart;
-            publicKeyPart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/octet-stream"));
-            apiKeyPart.setHeader(QNetworkRequest::ContentDispositionHeader,
-                              QVariant("form-data; name=\"api_key\""));
-            apiKeyPart.setBody(key.toUtf8());
-            requestMultiPart->append(apiKeyPart);
+            const QString& key = getTemporaryDomainKey(domainID);
+            if (!key.isEmpty()) {
+                QHttpPart apiKeyPart;
+                publicKeyPart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/octet-stream"));
+                apiKeyPart.setHeader(QNetworkRequest::ContentDispositionHeader,
+                    QVariant("form-data; name=\"api_key\""));
+                apiKeyPart.setBody(key.toUtf8());
+                requestMultiPart->append(apiKeyPart);
+            }
         }
 
         // setup callback parameters so we know once the keypair upload has succeeded or failed
