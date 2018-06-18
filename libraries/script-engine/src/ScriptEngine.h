@@ -762,6 +762,7 @@ protected:
     QHash<EntityItemID, EntityScriptDetails> _entityScripts;
     QHash<QString, EntityItemID> _occupiedScriptURLs;
     QList<DeferredLoadEntity> _deferredEntityLoads;
+    std::chrono::time_point<p_high_resolution_clock> _lastGarbageCollect;
 
     bool _isThreaded { false };
     QScriptEngineDebugger* _debugger { nullptr };

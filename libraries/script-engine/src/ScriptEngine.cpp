@@ -96,6 +96,10 @@ static const QScriptValue::PropertyFlags READONLY_HIDDEN_PROP_FLAGS { READONLY_P
 
 static const bool HIFI_AUTOREFRESH_FILE_SCRIPTS { true };
 
+namespace {
+    const std::chrono::milliseconds GARBAGE_COLLECT_PERIOD { 4000 };
+}
+
 Q_DECLARE_METATYPE(QScriptEngine::FunctionSignature)
 int functionSignatureMetaID = qRegisterMetaType<QScriptEngine::FunctionSignature>();
 
@@ -1185,6 +1189,11 @@ void ScriptEngine::run() {
             }
         }
         _lastUpdate = now;
+
+        if (decltype(_lastGarbageCollect)::clock::now() - _lastGarbageCollect > GARBAGE_COLLECT_PERIOD) {
+            requestGarbageCollection();
+            _lastGarbageCollect = decltype(_lastGarbageCollect)::clock::now();
+        }
 
         // only clear exceptions if we are not in the middle of evaluating
         if (!isEvaluating() && hasUncaughtException()) {
@@ -2533,6 +2542,7 @@ void ScriptEngine::doWithEnvironment(const EntityItemID& entityID, const QUrl& s
     maybeEmitUncaughtException(!entityID.isNull() ? entityID.toString() : __FUNCTION__);
     currentEntityIdentifier = oldIdentifier;
     currentSandboxURL = oldSandboxURL;
+    collectGarbage();
 }
 
 void ScriptEngine::callWithEnvironment(const EntityItemID& entityID, const QUrl& sandboxURL, QScriptValue function, QScriptValue thisObject, QScriptValueList args) {
