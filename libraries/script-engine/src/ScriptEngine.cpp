@@ -2542,7 +2542,6 @@ void ScriptEngine::doWithEnvironment(const EntityItemID& entityID, const QUrl& s
     maybeEmitUncaughtException(!entityID.isNull() ? entityID.toString() : __FUNCTION__);
     currentEntityIdentifier = oldIdentifier;
     currentSandboxURL = oldSandboxURL;
-    collectGarbage();
 }
 
 void ScriptEngine::callWithEnvironment(const EntityItemID& entityID, const QUrl& sandboxURL, QScriptValue function, QScriptValue thisObject, QScriptValueList args) {
