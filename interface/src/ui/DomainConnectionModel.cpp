@@ -29,7 +29,7 @@ QVariant DomainConnectionModel::data(const QModelIndex& index, int role) const {
     const LimitedNodeList::ConnectionTimesMap& times =
               DependencyManager::get<NodeList>()->getLastConnectionTimes();
 
-    if (!index.isValid() || index.row() >= times.size())
+    if (!index.isValid() || index.row() >= (int) times.size())
         return QVariant();
 
     

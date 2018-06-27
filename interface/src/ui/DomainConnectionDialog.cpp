@@ -37,7 +37,7 @@ DomainConnectionDialog::DomainConnectionDialog(QWidget* parent) :
     // ask the NodeList for the current values for connection times
     LimitedNodeList::ConnectionTimesMap times = DependencyManager::get<NodeList>()->getLastConnectionTimes();
     
-    timeTable->setRowCount(times.size());
+    timeTable->setRowCount((int) times.size());
 
     timeTable->setHorizontalHeaderLabels(TABLE_HEADERS);
 
