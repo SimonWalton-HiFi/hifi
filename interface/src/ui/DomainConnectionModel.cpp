@@ -25,30 +25,39 @@ DomainConnectionModel::~DomainConnectionModel() {
 
 QVariant DomainConnectionModel::data(const QModelIndex& index, int role) const {
     //sanity
-    const QMap<quint64, LimitedNodeList::ConnectionStep> &times =
-            DependencyManager::get<NodeList>()->getLastConnectionTimes();
+
+    const QMap<LimitedNodeList::ConnectionStep, quint64> &times =
+              DependencyManager::get<NodeList>()->getLastConnectionTimes();
 
     if (!index.isValid() || index.row() >= times.size())
         return QVariant();
 
-    // setup our data with the values from the NodeList
-    quint64 firstStepTime = times.firstKey() / USECS_PER_MSEC;
-    quint64 timestamp = times.keys().at(index.row());
+    
+    using Steps = std::vector<std::pair<LimitedNodeList::ConnectionStep, quint64>>;
+    Steps steps;
+    steps.reserve(times.size());
+
+    steps.insert(steps.begin(), times.constKeyValueBegin(), times.constKeyValueEnd());
+    std::sort(steps.begin(), steps.end(), [](Steps::value_type& s1, Steps::value_type& s2) { return s1.second < s2.second; });
+    
+    /// setup our data with the values from the NodeList
+    quint64 firstStepTime = steps[0].second / USECS_PER_MSEC;
+    quint64 timestamp = steps[index.row()].second;
 
     quint64 stepTime = timestamp / USECS_PER_MSEC;
     quint64 delta = 0;//(stepTime - lastStepTime);
     quint64 elapsed = 0;//stepTime - firstStepTime;
 
     if (index.row() > 0) {
-        quint64 prevstepTime = times.keys().at(index.row() - 1) / USECS_PER_MSEC;
-        delta = (stepTime - prevstepTime);
+        quint64 prevstepTime = steps[index.row() - 1].second / USECS_PER_MSEC;
+        delta = stepTime - prevstepTime;
         elapsed = stepTime - firstStepTime;
     }
 
     if (role == Qt::DisplayRole || role == DisplayNameRole) {
         const QMetaObject &nodeListMeta = NodeList::staticMetaObject;
         QMetaEnum stepEnum = nodeListMeta.enumerator(nodeListMeta.indexOfEnumerator("ConnectionStep"));
-        int stepIndex = (int) times.value(timestamp);
+        int stepIndex = (int) steps[index.row()].first;
         return stepEnum.valueToKey(stepIndex);
     } else if (role == DeltaRole) {
         return delta;
@@ -62,7 +71,7 @@ QVariant DomainConnectionModel::data(const QModelIndex& index, int role) const {
 
 int DomainConnectionModel::rowCount(const QModelIndex& parent) const {
     Q_UNUSED(parent)
-    const QMap<quint64, LimitedNodeList::ConnectionStep> &times =
+    const QMap<LimitedNodeList::ConnectionStep, quint64> &times =
             DependencyManager::get<NodeList>()->getLastConnectionTimes();
     return times.size();
 }
