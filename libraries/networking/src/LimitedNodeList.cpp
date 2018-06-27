@@ -1241,35 +1241,6 @@ void LimitedNodeList::flagTimeForConnectionStep(ConnectionStep connectionStep) {
 }
 
 void LimitedNodeList::flagTimeForConnectionStep(ConnectionStep connectionStep, quint64 timestamp) {
-    //if (connectionStep == ConnectionStep::LookupAddress) {
-    //    QWriteLocker writeLock(&_connectionTimeLock);
-
-    //    // we clear the current times if the user just fired off a lookup
-    //    _lastConnectionTimes.clear();
-    //    _areConnectionTimesComplete = false;
-
-    //    _lastConnectionTimes[timestamp] = connectionStep;
-    //} else if (!_areConnectionTimesComplete) {
-    //    QWriteLocker writeLock(&_connectionTimeLock);
-
-
-    //    // anything > than sending the first DS check should not come before the DS check in, so we drop those
-    //    // this handles the case where you lookup an address and get packets in the existing domain before changing domains
-    //    if (connectionStep > LimitedNodeList::ConnectionStep::SendDSCheckIn
-    //        && (_lastConnectionTimes.key(ConnectionStep::SendDSCheckIn) == 0
-    //            || timestamp <= _lastConnectionTimes.key(ConnectionStep::SendDSCheckIn))) {
-    //        return;
-    //    }
-
-    //    // if there is no time for existing step add a timestamp on the first call for each ConnectionStep
-    //    _lastConnectionTimes[timestamp] = connectionStep;
-
-    //    // if this is a received audio packet we consider our connection times complete
-    //    if (connectionStep == ConnectionStep::ReceiveFirstAudioPacket) {
-    //        _areConnectionTimesComplete = true;
-    //    }
-    //}
-
     if (connectionStep == ConnectionStep::LookupAddress) {
         QWriteLocker writeLock(&_connectionTimeLock);
 
