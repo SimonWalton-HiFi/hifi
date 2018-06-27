@@ -35,42 +35,7 @@ DomainConnectionDialog::DomainConnectionDialog(QWidget* parent) :
     timeTable->setColumnCount(TABLE_HEADERS.size());
 
     // ask the NodeList for the current values for connection times
-    //QMap<quint64, LimitedNodeList::ConnectionStep> times = DependencyManager::get<NodeList>()->getLastConnectionTimes();
-
-    //timeTable->setRowCount(times.size());
-
-    //timeTable->setHorizontalHeaderLabels(TABLE_HEADERS);
-
-    //// setup our data with the values from the NodeList
-    //quint64 firstStepTime = times.firstKey() / USECS_PER_MSEC;
-    //quint64 lastStepTime = firstStepTime;
-
-    //int thisRow = 0;
-
-    //const QMetaObject &nodeListMeta = NodeList::staticMetaObject;
-    //QMetaEnum stepEnum = nodeListMeta.enumerator(nodeListMeta.indexOfEnumerator("ConnectionStep"));
-
-    //foreach(quint64 timestamp, times.keys()) {
-    //    // When did this step occur, how long since the last step, how long since the start?
-    //    quint64 stepTime = timestamp / USECS_PER_MSEC;
-    //    quint64 delta = (stepTime - lastStepTime);
-    //    quint64 elapsed = stepTime - firstStepTime;
-
-    //    lastStepTime = stepTime;
-
-    //    // setup the columns for this row in the table
-    //    int stepIndex = (int) times.value(timestamp);
-
-    //    timeTable->setItem(thisRow, 0, new QTableWidgetItem(stepEnum.valueToKey(stepIndex)));
-    //    timeTable->setItem(thisRow, 1, new QTableWidgetItem(QString::number(stepTime)));
-    //    timeTable->setItem(thisRow, 2, new QTableWidgetItem(QString::number(delta)));
-    //    timeTable->setItem(thisRow, 3, new QTableWidgetItem(QString::number(elapsed)));
-
-    //    ++thisRow;
-    //}
-
-    // ask the NodeList for the current values for connection times
-    QMap<LimitedNodeList::ConnectionStep, quint64> times = DependencyManager::get<NodeList>()->getLastConnectionTimes();
+    LimitedNodeList::ConnectionTimesMap times = DependencyManager::get<NodeList>()->getLastConnectionTimes();
     
     timeTable->setRowCount(times.size());
 
@@ -80,8 +45,9 @@ DomainConnectionDialog::DomainConnectionDialog(QWidget* parent) :
     Steps steps;
     steps.reserve(times.size());
 
-    steps.insert(steps.begin(), times.constKeyValueBegin(), times.constKeyValueEnd());
-    std::sort(steps.begin(), steps.end(), [](Steps::value_type& s1, Steps::value_type& s2) { return s1.second < s2.second; });
+    steps.insert(steps.begin(), times.cbegin(), times.cend());
+    std::sort(steps.begin(), steps.end(),
+        [](Steps::value_type& s1, Steps::value_type& s2) { return s1.second < s2.second; });
 
     // setup our data with the values from the NodeList
     quint64 firstStepTime = steps.empty() ? 0L : steps[0].second / USECS_PER_MSEC;

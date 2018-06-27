@@ -17,6 +17,7 @@
 #include <iterator>
 #include <memory>
 #include <set>
+#include <map>
 #include <unordered_map>
 
 #ifndef _WIN32
@@ -294,7 +295,8 @@ public:
     void putLocalPortIntoSharedMemory(const QString key, QObject* parent, quint16 localPort);
     bool getLocalServerPortFromSharedMemory(const QString key, quint16& localPort);
 
-    const QMap<ConnectionStep, quint64> getLastConnectionTimes() const
+    using ConnectionTimesMap = std::map<ConnectionStep, quint64>;
+    const ConnectionTimesMap getLastConnectionTimes() const
         { QReadLocker readLock(&_connectionTimeLock); return _lastConnectionTimes; }
     void flagTimeForConnectionStep(ConnectionStep connectionStep);
 
@@ -411,7 +413,7 @@ protected:
     quint64 _publicSocketUpdateTime = 0;
 
     mutable QReadWriteLock _connectionTimeLock { };
-    QMap<ConnectionStep, quint64> _lastConnectionTimes;
+    ConnectionTimesMap _lastConnectionTimes;
     bool _areConnectionTimesComplete = false;
 
     template<typename IteratorLambda>

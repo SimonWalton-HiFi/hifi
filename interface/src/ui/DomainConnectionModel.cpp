@@ -26,7 +26,7 @@ DomainConnectionModel::~DomainConnectionModel() {
 QVariant DomainConnectionModel::data(const QModelIndex& index, int role) const {
     //sanity
 
-    const QMap<LimitedNodeList::ConnectionStep, quint64> &times =
+    const LimitedNodeList::ConnectionTimesMap& times =
               DependencyManager::get<NodeList>()->getLastConnectionTimes();
 
     if (!index.isValid() || index.row() >= times.size())
@@ -37,8 +37,9 @@ QVariant DomainConnectionModel::data(const QModelIndex& index, int role) const {
     Steps steps;
     steps.reserve(times.size());
 
-    steps.insert(steps.begin(), times.constKeyValueBegin(), times.constKeyValueEnd());
-    std::sort(steps.begin(), steps.end(), [](Steps::value_type& s1, Steps::value_type& s2) { return s1.second < s2.second; });
+    steps.insert(steps.begin(), times.cbegin(), times.cend());
+    std::sort(steps.begin(), steps.end(),
+        [](Steps::value_type& s1, Steps::value_type& s2) { return s1.second < s2.second; });
     
     /// setup our data with the values from the NodeList
     quint64 firstStepTime = steps[0].second / USECS_PER_MSEC;
@@ -71,9 +72,9 @@ QVariant DomainConnectionModel::data(const QModelIndex& index, int role) const {
 
 int DomainConnectionModel::rowCount(const QModelIndex& parent) const {
     Q_UNUSED(parent)
-    const QMap<LimitedNodeList::ConnectionStep, quint64> &times =
+    const LimitedNodeList::ConnectionTimesMap& times =
             DependencyManager::get<NodeList>()->getLastConnectionTimes();
-    return times.size();
+    return (int) times.size();
 }
 
 QHash<int, QByteArray> DomainConnectionModel::roleNames() const {

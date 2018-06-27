@@ -1251,12 +1251,12 @@ void LimitedNodeList::flagTimeForConnectionStep(ConnectionStep connectionStep, q
     if (!_areConnectionTimesComplete) {
         QWriteLocker writeLock(&_connectionTimeLock);
 
-        if (!_lastConnectionTimes.contains(connectionStep)) {
+        if (_lastConnectionTimes.count(connectionStep) == 0) {
 
             // anything > than sending the first DS check should not come before the DS check in, so we drop those
             // this handles the case where you lookup an address and get packets in the existing domain before changing domains
             if (connectionStep > LimitedNodeList::ConnectionStep::SendDSCheckIn
-                && !_lastConnectionTimes.contains(ConnectionStep::SendDSCheckIn)) {
+                && _lastConnectionTimes.count(ConnectionStep::SendDSCheckIn) == 0) {
                 return;
             }
             _lastConnectionTimes[connectionStep] = timestamp;
