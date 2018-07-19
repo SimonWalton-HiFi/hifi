@@ -13,6 +13,12 @@
 
 #include "HMACAuth.h"
 
+#define HIFI_HMAC_TIMING
+#ifdef HIFI_HMAC_TIMING
+#include "SharedUtil.h"
+#include "NetworkLogging.h"
+#endif
+
 int NLPacket::localHeaderSize(PacketType type) {
     bool nonSourced = PacketTypeEnum::getNonSourcedPackets().contains(type);
     bool nonVerified = PacketTypeEnum::getNonVerifiedPackets().contains(type);
@@ -153,6 +159,12 @@ QByteArray NLPacket::verificationHashInHeader(const udt::Packet& packet) {
 }
 
 QByteArray NLPacket::hashForPacketAndHMAC(const udt::Packet& packet, HMACAuth& hash) {
+#ifdef HIFI_HMAC_TIMING
+    static qint64 totalTime = 0.0f;
+    static int totalHashes = 0;
+    qint64 currentUsecs = usecTimestampNow();
+    static int totalBytes = 0;
+#endif
     int offset = Packet::totalHeaderSize(packet.isPartOfMessage()) + sizeof(PacketType) + sizeof(PacketVersion)
         + NUM_BYTES_LOCALID + NUM_BYTES_MD5_HASH;
     
@@ -161,6 +173,14 @@ QByteArray NLPacket::hashForPacketAndHMAC(const udt::Packet& packet, HMACAuth& h
     if (!hash.calculateHash(hashResult, packet.getData() + offset, packet.getDataSize() - offset)) {
         return QByteArray();
     }
+#ifdef HIFI_HMAC_TIMING
+    totalTime += usecTimestampNow() - currentUsecs;
+    totalBytes += packet.getDataSize();
+    if (++totalHashes % 20 == 0) {
+        qCDebug(networking) << "Average hash time/us:" << ((float)totalTime / totalHashes)
+            << "\t Average packet size/B:" << (totalBytes / totalHashes);
+    }
+#endif
     return QByteArray((const char*) hashResult.data(), (int) hashResult.size());
 }
 
