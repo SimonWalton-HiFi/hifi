@@ -323,6 +323,20 @@ void AvatarMixerSlave::broadcastAvatarDataToAgent(const SharedNodePointer& node)
         }
     }
 
+//#define HIFI_PADOUT_BULKAVATAR
+#ifdef HIFI_PADOUT_BULKAVATAR
+    {
+        const int desiredNumAvatars = 200;
+        int currentNum = (int)sortedAvatars.size();
+        if (currentNum > 0) {
+            auto oneAvatar = sortedAvatars.top();
+            for (int i = currentNum; i < desiredNumAvatars; ++i) {
+                sortedAvatars.push(oneAvatar);
+            }
+        }
+    }
+#endif
+
     // loop through our sorted avatars and allocate our bandwidth to them accordingly
 
     int remainingAvatars = (int)sortedAvatars.size();

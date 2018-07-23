@@ -160,7 +160,9 @@ QByteArray NLPacket::verificationHashInHeader(const udt::Packet& packet) {
 
 QByteArray NLPacket::hashForPacketAndHMAC(const udt::Packet& packet, HMACAuth& hash) {
 #ifdef HIFI_HMAC_TIMING
-    static qint64 totalTime = 0.0f;
+    QMutex lock;
+    QMutexLocker locker(&lock);
+    static qint64 totalTime = 0;
     static int totalHashes = 0;
     qint64 currentUsecs = usecTimestampNow();
     static int totalBytes = 0;
@@ -174,11 +176,13 @@ QByteArray NLPacket::hashForPacketAndHMAC(const udt::Packet& packet, HMACAuth& h
         return QByteArray();
     }
 #ifdef HIFI_HMAC_TIMING
-    totalTime += usecTimestampNow() - currentUsecs;
-    totalBytes += packet.getDataSize();
-    if (++totalHashes % 20 == 0) {
-        qCDebug(networking) << "Average hash time/us:" << ((float)totalTime / totalHashes)
-            << "\t Average packet size/B:" << (totalBytes / totalHashes);
+    if (typeInHeader(packet) == PacketType::BulkAvatarData) {
+        totalTime += usecTimestampNow() - currentUsecs;
+        totalBytes += packet.getDataSize() - offset;
+        if (++totalHashes % 20 == 0) {
+            qCDebug(networking) << "Average hash time/us:" << ((float)totalTime / totalHashes)
+                << "\t Average packet size/B:" << (totalBytes / totalHashes);
+        }
     }
 #endif
     return QByteArray((const char*) hashResult.data(), (int) hashResult.size());
