@@ -88,7 +88,7 @@ void ProceduralData::parse(const QJsonObject& proceduralData) {
         if (versionJson.isDouble()) {
             version = (uint8_t)(floor(versionJson.toDouble()));
             // invalid version
-            if (!(version == 1 || version == 2)) {
+            if (!(version == 1 || version == 2 || version == 3)) {
                 return;
             }
         } else {
@@ -132,6 +132,11 @@ void Procedural::setProceduralData(const ProceduralData& proceduralData) {
 
     _dirty = true;
     _enabled = false;
+
+    if (proceduralData.version != _data.version) {
+        _data.version = proceduralData.version;
+        _shaderDirty = true;
+    }
 
     if (proceduralData.uniforms != _data.uniforms) {
         _data.uniforms = proceduralData.uniforms;
@@ -234,6 +239,8 @@ std::string Procedural::replaceProceduralBlock(const std::string& fragmentSource
             fragmentShaderSource.replace(replaceIndex, PROCEDURAL_VERSION.size(), "#define PROCEDURAL_V1 1");
         } else if (_data.version == 2) {
             fragmentShaderSource.replace(replaceIndex, PROCEDURAL_VERSION.size(), "#define PROCEDURAL_V2 1");
+        } else if (_data.version == 3) {
+            fragmentShaderSource.replace(replaceIndex, PROCEDURAL_VERSION.size(), "#define PROCEDURAL_V3 1");
         }
     }
     replaceIndex = fragmentShaderSource.find(PROCEDURAL_BLOCK);

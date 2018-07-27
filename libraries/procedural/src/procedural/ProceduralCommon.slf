@@ -50,3 +50,20 @@ uniform sampler2D iChannel2;
 uniform sampler2D iChannel3;
 
 #endif
+
+#ifdef PROCEDURAL_V3
+
+struct ProceduralData {
+    vec3 position;
+    vec3 normal;
+    vec3 diffuse;
+    vec3 specular;
+    vec3 emissive;
+    float alpha;
+    float roughness;
+    float metallic;
+    float occlusion;
+    float scattering;
+};
+
+#endif

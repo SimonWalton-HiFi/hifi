@@ -44,23 +44,56 @@ void main(void) {
     vec3 specular = DEFAULT_SPECULAR;
     float shininess = DEFAULT_SHININESS;
     float emissiveAmount = 0.0;
+    TransformCamera cam = getTransformCamera();
 
 #ifdef PROCEDURAL
 
-#ifdef PROCEDURAL_V1
+#if defined(PROCEDURAL_V1)
     specular = getProceduralColor().rgb;
     // Procedural Shaders are expected to be Gamma corrected so let's bring back the RGB in linear space for the rest of the pipeline
     //specular = pow(specular, vec3(2.2));
     emissiveAmount = 1.0;
-#else
+#elif defined(PROCEDURAL_V2)
     emissiveAmount = getProceduralColors(diffuse, specular, shininess);
+#elif defined(PROCEDURAL_V3)
+    vec4 position = cam._viewInverse * _positionES;
+    ProceduralData proceduralData = {
+        position.xyz,
+        normal,
+        vec3(0.0),
+        DEFAULT_SPECULAR,
+        DEFAULT_EMISSIVE,
+        1.0,
+        DEFAULT_ROUGHNESS,
+        DEFAULT_METALLIC,
+        DEFAULT_OCCLUSION,
+        DEFAULT_SCATTERING
+    };
+    getProceduralColors(proceduralData);
+    position = vec4(proceduralData.position, 1.0);
+    vec4 posEye = cam._view * position;
+    _fragColor0 = vec4(evalGlobalLightingAlphaBlendedWithHaze(
+        cam._viewInverse,
+        1.0,
+        proceduralData.occlusion,
+        posEye,
+        proceduralData.normal,
+        proceduralData.diffuse,
+        proceduralData.specular,
+        proceduralData.metallic,
+        proceduralData.emissive,
+        proceduralData.roughness,
+        proceduralData.alpha), proceduralData.alpha);
+    vec4 posClip = cam._projection * posEye;
+    float far = gl_DepthRange.far;
+    float near = gl_DepthRange.near;
+    gl_FragDepth = 0.5 * ((far - near) * posClip.z / posClip.w + near + far);
 #endif
 
 #endif
 
-    TransformCamera cam = getTransformCamera();
+#ifndef PROCEDURAL_V3
     vec3 fragPosition = _positionES.xyz;
-
     if (emissiveAmount > 0.0) {
         _fragColor0 = vec4(evalGlobalLightingAlphaBlendedWithHaze(
             cam._viewInverse,
@@ -88,4 +121,5 @@ void main(void) {
             DEFAULT_ROUGHNESS, _color.a),
             _color.a);
     }
+#endif
 }
