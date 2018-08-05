@@ -36,7 +36,7 @@
 #include "SimulationFlags.h"
 #include "EntityDynamicInterface.h"
 
-#include "graphics/Material.h"
+#include "procedural/ProceduralMaterial.h"
 
 class EntitySimulation;
 class EntityTreeElement;
@@ -515,7 +515,7 @@ public:
     virtual void postParentFixup() {}
 
     void addMaterial(graphics::MaterialLayer material, const std::string& parentMaterialName);
-    void removeMaterial(graphics::MaterialPointer material, const std::string& parentMaterialName);
+    void removeMaterial(graphics::ProceduralMaterialPointer material, const std::string& parentMaterialName);
     std::unordered_map<std::string, graphics::MultiMaterial> getMaterials();
 
     void setSimulationOwnershipExpiry(uint64_t expiry) { _simulationOwnershipExpiry = expiry; }

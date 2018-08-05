@@ -12,20 +12,20 @@
 
 #include "glm/glm.hpp"
 
-#include "ModelCache.h"
+#include "ProceduralMaterial.h"
 
-class NetworkMaterialResource : public Resource {
+class ProceduralMaterialResource : public Resource {
 public:
-    NetworkMaterialResource(const QUrl& url);
+    ProceduralMaterialResource(const QUrl& url);
 
-    QString getType() const override { return "NetworkMaterial"; }
+    QString getType() const override { return "ProceduralNetworkMaterial"; }
 
     virtual void downloadFinished(const QByteArray& data) override;
 
     typedef struct ParsedMaterials {
-        uint version { 1 };
+        uint version{ 1 };
         std::vector<std::string> names;
-        std::unordered_map<std::string, std::shared_ptr<NetworkMaterial>> networkMaterials;
+        std::unordered_map<std::string, graphics::ProceduralMaterialPointer> networkMaterials;
 
         void reset() {
             version = 1;
@@ -38,22 +38,25 @@ public:
     ParsedMaterials parsedMaterials;
 
     static ParsedMaterials parseJSONMaterials(const QJsonDocument& materialJSON, const QUrl& baseUrl);
-    static std::pair<std::string, std::shared_ptr<NetworkMaterial>> parseJSONMaterial(const QJsonObject& materialJSON, const QUrl& baseUrl);
+    static std::pair<std::string, graphics::ProceduralMaterialPointer> parseJSONMaterial(const QJsonObject& materialJSON,
+                                                                                         const QUrl& baseUrl);
 
 private:
     static bool parseJSONColor(const QJsonValue& array, glm::vec3& color, bool& isSRGB);
 };
 
-using NetworkMaterialResourcePointer = QSharedPointer<NetworkMaterialResource>;
+using ProceduralMaterialResourcePointer = QSharedPointer<ProceduralMaterialResource>;
 
 class MaterialCache : public ResourceCache {
 public:
     static MaterialCache& instance();
 
-    NetworkMaterialResourcePointer getMaterial(const QUrl& url);
+    ProceduralMaterialResource getMaterial(const QUrl& url);
 
 protected:
-    virtual QSharedPointer<Resource> createResource(const QUrl& url, const QSharedPointer<Resource>& fallback, const void* extra) override;
+    virtual QSharedPointer<Resource> createResource(const QUrl& url,
+                                                    const QSharedPointer<Resource>& fallback,
+                                                    const void* extra) override;
 };
 
 #endif

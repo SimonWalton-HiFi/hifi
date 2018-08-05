@@ -57,7 +57,7 @@ public:
     const uint64_t& getUpdateTime() const { return _updateTime; }
 
     virtual void addMaterial(graphics::MaterialLayer material, const std::string& parentMaterialName);
-    virtual void removeMaterial(graphics::MaterialPointer material, const std::string& parentMaterialName);
+    virtual void removeMaterial(graphics::ProceduralMaterialPointer material, const std::string& parentMaterialName);
 
     virtual scriptable::ScriptableModelBase getScriptableModel() override { return scriptable::ScriptableModelBase(); }
 

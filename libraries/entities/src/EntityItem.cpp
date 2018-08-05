@@ -3069,7 +3069,7 @@ void EntityItem::addMaterial(graphics::MaterialLayer material, const std::string
     _materials[parentMaterialName].push(material);
 }
 
-void EntityItem::removeMaterial(graphics::MaterialPointer material, const std::string& parentMaterialName) {
+void EntityItem::removeMaterial(graphics::ProceduralMaterialPointer material, const std::string& parentMaterialName) {
     std::lock_guard<std::mutex> lock(_materialsLock);
     _materials[parentMaterialName].remove(material);
 }

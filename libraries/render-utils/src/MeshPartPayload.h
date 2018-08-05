@@ -22,12 +22,14 @@
 
 #include "Model.h"
 
+#include <procedural/ProceduralMaterial.h>
+
 class Model;
 
 class MeshPartPayload {
 public:
     MeshPartPayload() {}
-    MeshPartPayload(const std::shared_ptr<const graphics::Mesh>& mesh, int partIndex, graphics::MaterialPointer material);
+    MeshPartPayload(const std::shared_ptr<const graphics::Mesh>& mesh, int partIndex, graphics::ProceduralMaterialPointer material);
 
     typedef render::Payload<MeshPartPayload> Payload;
     typedef Payload::DataPointer Pointer;
@@ -70,10 +72,10 @@ public:
     bool hasTextureInfo() const { return topMaterialExists() ? _drawMaterials.top().material->hasTextureInfo() : false; }
 
     void addMaterial(graphics::MaterialLayer material);
-    void removeMaterial(graphics::MaterialPointer material);
+    void removeMaterial(graphics::ProceduralMaterialPointer material);
 
 protected:
-    static const graphics::MaterialPointer DEFAULT_MATERIAL;
+    static const graphics::ProceduralMaterialPointer DEFAULT_MATERIAL;
     render::ItemKey _itemKey{ render::ItemKey::Builder::opaqueShape().build() };
 
     bool topMaterialExists() const { return !_drawMaterials.empty() && _drawMaterials.top().material; }

@@ -642,7 +642,7 @@ scriptable::ScriptableModelBase Model::getScriptableModel() {
 
             int numParts = (int)mesh->getNumParts();
             for (int partIndex = 0; partIndex < numParts; partIndex++) {
-                result.appendMaterial(graphics::MaterialLayer(getGeometry()->getShapeMaterial(shapeID), 0), shapeID, _modelMeshMaterialNames[shapeID]);
+                result.appendMaterial(graphics::MaterialLayer(std::make_shared<graphics::ProceduralMaterial>(*getGeometry()->getShapeMaterial(shapeID)), 0), shapeID, _modelMeshMaterialNames[shapeID]);
                 shapeID++;
             }
         }
@@ -1569,7 +1569,7 @@ void Model::addMaterial(graphics::MaterialLayer material, const std::string& par
     AbstractViewStateInterface::instance()->getMain3DScene()->enqueueTransaction(transaction);
 }
 
-void Model::removeMaterial(graphics::MaterialPointer material, const std::string& parentMaterialName) {
+void Model::removeMaterial(graphics::ProceduralMaterialPointer material, const std::string& parentMaterialName) {
     std::vector<unsigned int> shapeIDs = getMeshIDsFromMaterialID(QString(parentMaterialName.c_str()));
     render::Transaction transaction;
     for (auto shapeID : shapeIDs) {

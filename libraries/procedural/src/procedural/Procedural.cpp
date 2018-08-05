@@ -491,7 +491,7 @@ void Procedural::setupChannels(bool shouldCreate, bool transparent) {
     }
 }
 
-glm::vec4 Procedural::getColor(const glm::vec4& entityColor) {
+glm::vec4 Procedural::getColor(const glm::vec4& entityColor) const {
     if (_data.version == 1) {
         return glm::vec4(1);
     }

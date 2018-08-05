@@ -11,6 +11,8 @@
 
 #include "EntityItem.h"
 
+#include <procedural/ProceduralMaterial.h>
+
 namespace entity {
     enum Shape {
         Triangle,
@@ -101,7 +103,9 @@ public:
     virtual void computeShapeInfo(ShapeInfo& info) override;
     virtual ShapeType getShapeType() const override;
 
-    std::shared_ptr<graphics::Material> getMaterial() { return _material; }
+    virtual void setUserData(const QString& userData) override;
+
+    graphics::ProceduralMaterialPointer getMaterial() { return _material; }
 
 protected:
 
@@ -114,7 +118,7 @@ protected:
     //! ellipsoids.
     ShapeType _collisionShapeType{ ShapeType::SHAPE_TYPE_ELLIPSOID };
 
-    std::shared_ptr<graphics::Material> _material;
+    graphics::ProceduralMaterialPointer _material;
 };
 
 #endif // hifi_ShapeEntityItem_h

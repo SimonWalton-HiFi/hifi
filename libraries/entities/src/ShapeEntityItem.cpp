@@ -19,6 +19,8 @@
 #include "EntityTree.h"
 #include "EntityTreeElement.h"
 
+#include <procedural/Procedural.h>
+
 namespace entity {
 
     /**jsdoc
@@ -112,7 +114,7 @@ EntityItemPointer ShapeEntityItem::sphereFactory(const EntityItemID& entityID, c
 ShapeEntityItem::ShapeEntityItem(const EntityItemID& entityItemID) : EntityItem(entityItemID) {
     _type = EntityTypes::Shape;
     _volumeMultiplier *= PI / 6.0f;
-    _material = std::make_shared<graphics::Material>();
+    _material = std::make_shared<graphics::ProceduralMaterial>();
 }
 
 EntityItemProperties ShapeEntityItem::getProperties(EntityPropertyFlags desiredProperties) const {
@@ -236,6 +238,13 @@ void ShapeEntityItem::setColor(const QColor& value) {
 void ShapeEntityItem::setAlpha(float alpha) {
     _alpha = alpha;
     _material->setOpacity(alpha);
+}
+
+void ShapeEntityItem::setUserData(const QString& userData) {
+    if (getUserData() != userData) {
+        EntityItem::setUserData(userData);
+        _material->editProcedural().setProceduralData(ProceduralData::parse(userData));
+    }
 }
 
 void ShapeEntityItem::setUnscaledDimensions(const glm::vec3& value) {

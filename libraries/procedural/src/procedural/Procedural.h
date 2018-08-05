@@ -6,9 +6,8 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
-#pragma once
-#ifndef hifi_RenderableProcedrualItem_h
-#define hifi_RenderableProcedrualItem_h
+#ifndef hifi_Procedural_h
+#define hifi_Procedural_h
 
 #include <atomic>
 
@@ -26,8 +25,6 @@
 
 using UniformLambdas = std::list<std::function<void(gpu::Batch& batch)>>;
 const size_t MAX_PROCEDURAL_TEXTURE_CHANNELS{ 4 };
-
-
 
 struct ProceduralData {
     static QJsonValue getProceduralData(const QString& proceduralJson);
@@ -58,7 +55,7 @@ public:
     void prepare(gpu::Batch& batch, const glm::vec3& position, const glm::vec3& size, const glm::quat& orientation, const glm::vec4& color = glm::vec4(1));
     const gpu::ShaderPointer& getOpaqueShader() const { return _opaqueShader; }
 
-    glm::vec4 getColor(const glm::vec4& entityColor);
+    glm::vec4 getColor(const glm::vec4& entityColor) const;
     quint64 getFadeStartTime() const { return _fadeStartTime; }
     bool isFading() const { return _doesFade && _isFading; }
     void setIsFading(bool isFading) { _isFading = isFading; }

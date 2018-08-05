@@ -5,7 +5,7 @@
 //  Distributed under the Apache License, Version 2.0.
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
-#include "MaterialCache.h"
+#include "ProceduralMaterialCache.h"
 
 #include "QJsonObject"
 #include "QJsonDocument"
@@ -13,10 +13,10 @@
 
 #include "RegisteredMetaTypes.h"
 
-NetworkMaterialResource::NetworkMaterialResource(const QUrl& url) :
+ProceduralMaterialResource::ProceduralMaterialResource(const QUrl& url) :
     Resource(url) {}
 
-void NetworkMaterialResource::downloadFinished(const QByteArray& data) {
+void ProceduralMaterialResource::downloadFinished(const QByteArray& data) {
     parsedMaterials.reset();
 
     if (_url.toString().contains(".json")) {
@@ -47,7 +47,7 @@ void NetworkMaterialResource::downloadFinished(const QByteArray& data) {
  * </table>
  * @typedef {array} RGBS
  */
-bool NetworkMaterialResource::parseJSONColor(const QJsonValue& array, glm::vec3& color, bool& isSRGB) {
+bool ProceduralMaterialResource::parseJSONColor(const QJsonValue& array, glm::vec3& color, bool& isSRGB) {
     if (array.isArray()) {
         QJsonArray colorArray = array.toArray();
         if (colorArray.size() >= 3 && colorArray[0].isDouble() && colorArray[1].isDouble() && colorArray[2].isDouble()) {
@@ -75,7 +75,8 @@ bool NetworkMaterialResource::parseJSONColor(const QJsonValue& array, glm::vec3&
  * @property {number} materialVersion=1 - The version of the material. <em>Currently not used.</em>
  * @property {Material|Material[]} materials - The details of the material or materials.
  */
-NetworkMaterialResource::ParsedMaterials NetworkMaterialResource::parseJSONMaterials(const QJsonDocument& materialJSON, const QUrl& baseUrl) {
+ProceduralMaterialResource::ParsedMaterials ProceduralMaterialResource::parseJSONMaterials(const QJsonDocument& materialJSON,
+                                                                                           const QUrl& baseUrl) {
     ParsedMaterials toReturn;
     if (!materialJSON.isNull() && materialJSON.isObject()) {
         QJsonObject materialJSONObject = materialJSON.object();
@@ -138,9 +139,9 @@ NetworkMaterialResource::ParsedMaterials NetworkMaterialResource::parseJSONMater
  * @property {string} lightMap - URL of light map texture image. <em>Currently not used.</em>
  */
 // Note: See MaterialEntityItem.h for default values used in practice.
-std::pair<std::string, std::shared_ptr<NetworkMaterial>> NetworkMaterialResource::parseJSONMaterial(const QJsonObject& materialJSON, const QUrl& baseUrl) {
+std::pair<std::string, graphics::ProceduralMaterialPointer> ProceduralMaterialResource::parseJSONMaterial(const QJsonObject& materialJSON, const QUrl& baseUrl) {
     std::string name = "";
-    std::shared_ptr<NetworkMaterial> material = std::make_shared<NetworkMaterial>();
+    graphics::ProceduralMaterialPointer material = std::make_shared<graphics::ProceduralMaterial>();
     for (auto& key : materialJSON.keys()) {
         if (key == "name") {
             auto nameJSON = materialJSON.value(key);
@@ -252,9 +253,12 @@ std::pair<std::string, std::shared_ptr<NetworkMaterial>> NetworkMaterialResource
             if (value.isString()) {
                 material->setLightmapMap(baseUrl.resolved(value.toString()));
             }
+        } else if (key == "procedural") {
+            auto value = materialJSON.value(key);
+            material->setProceduralData(QJsonDocument::fromVariant(value.toVariant()).toJson());
         }
     }
-    return std::pair<std::string, std::shared_ptr<NetworkMaterial>>(name, material);
+    return std::pair<std::string, graphics::ProceduralMaterialPointer>(name, material);
 }
 
 MaterialCache& MaterialCache::instance() {
@@ -262,10 +266,10 @@ MaterialCache& MaterialCache::instance() {
     return _instance;
 }
 
-NetworkMaterialResourcePointer MaterialCache::getMaterial(const QUrl& url) {
-    return ResourceCache::getResource(url, QUrl(), nullptr).staticCast<NetworkMaterialResource>();
+ProceduralMaterialResourcePointer MaterialCache::getMaterial(const QUrl& url) {
+    return ResourceCache::getResource(url, QUrl(), nullptr).staticCast<ProceduralMaterialResource>();
 }
 
 QSharedPointer<Resource> MaterialCache::createResource(const QUrl& url, const QSharedPointer<Resource>& fallback, const void* extra) {
-    return QSharedPointer<Resource>(new NetworkMaterialResource(url), &Resource::deleter);
+    return QSharedPointer<Resource>(new ProceduralMaterialResource(url), &Resource::deleter);
 }

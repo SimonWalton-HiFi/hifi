@@ -422,7 +422,7 @@ void EntityRenderer::addMaterial(graphics::MaterialLayer material, const std::st
     _materials[parentMaterialName].push(material);
 }
 
-void EntityRenderer::removeMaterial(graphics::MaterialPointer material, const std::string& parentMaterialName) {
+void EntityRenderer::removeMaterial(graphics::ProceduralMaterialPointer material, const std::string& parentMaterialName) {
     std::lock_guard<std::mutex> lock(_materialsLock);
     _materials[parentMaterialName].remove(material);
 }

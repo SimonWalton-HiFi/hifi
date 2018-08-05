@@ -47,9 +47,9 @@ template <> void payloadRender(const MeshPartPayload::Pointer& payload, RenderAr
 }
 }
 
-const graphics::MaterialPointer MeshPartPayload::DEFAULT_MATERIAL = std::make_shared<graphics::Material>();
+const graphics::ProceduralMaterialPointer MeshPartPayload::DEFAULT_MATERIAL = std::make_shared<graphics::ProceduralMaterial>();
 
-MeshPartPayload::MeshPartPayload(const std::shared_ptr<const graphics::Mesh>& mesh, int partIndex, graphics::MaterialPointer material) {
+MeshPartPayload::MeshPartPayload(const std::shared_ptr<const graphics::Mesh>& mesh, int partIndex, graphics::ProceduralMaterialPointer material) {
     updateMeshPart(mesh, partIndex);
     addMaterial(graphics::MaterialLayer(material, 0));
 }
@@ -75,7 +75,7 @@ void MeshPartPayload::addMaterial(graphics::MaterialLayer material) {
     _drawMaterials.push(material);
 }
 
-void MeshPartPayload::removeMaterial(graphics::MaterialPointer material) {
+void MeshPartPayload::removeMaterial(graphics::ProceduralMaterialPointer material) {
     _drawMaterials.remove(material);
 }
 
@@ -249,7 +249,7 @@ void ModelMeshPartPayload::initCache(const ModelPointer& model) {
         _hasTangents = !mesh.tangents.isEmpty();
     }
 
-    auto networkMaterial = model->getGeometry()->getShapeMaterial(_shapeID);
+    auto networkMaterial = std::make_shared<graphics::ProceduralMaterial>(*model->getGeometry()->getShapeMaterial(_shapeID));
     if (networkMaterial) {
         addMaterial(graphics::MaterialLayer(networkMaterial, 0));
     }

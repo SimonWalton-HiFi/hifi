@@ -12,8 +12,8 @@
 #include "EntityItem.h"
 
 #include "MaterialMappingMode.h"
-#include <model-networking/ModelCache.h>
-#include <model-networking/MaterialCache.h>
+#include <procedural/ProceduralMaterial.h>
+#include <procedural/ProceduralMaterialCache.h>
 
 class MaterialEntityItem : public EntityItem {
     using Pointer = std::shared_ptr<MaterialEntityItem>;
@@ -76,7 +76,7 @@ public:
     QString getMaterialData() const { return _materialData; }
     void setMaterialData(const QString& materialData);
 
-    std::shared_ptr<NetworkMaterial> getMaterial() const;
+    graphics::ProceduralMaterialPointer getMaterial() const;
 
     void setParentID(const QUuid& parentID) override;
 
@@ -118,8 +118,8 @@ private:
     float _materialMappingRot { 0 };
     QString _materialData;
 
-    NetworkMaterialResourcePointer _networkMaterial;
-    NetworkMaterialResource::ParsedMaterials _parsedMaterials;
+    ProceduralMaterialResourcePointer _networkMaterial;
+    ProceduralMaterialResource::ParsedMaterials _parsedMaterials;
     std::string _currentMaterialName;
 
     bool _retryApply { false };

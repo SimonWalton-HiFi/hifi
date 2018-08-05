@@ -330,7 +330,7 @@ public:
     void setUseDualQuaternionSkinning(bool value);
 
     void addMaterial(graphics::MaterialLayer material, const std::string& parentMaterialName);
-    void removeMaterial(graphics::MaterialPointer material, const std::string& parentMaterialName);
+    void removeMaterial(graphics::ProceduralMaterialPointer material, const std::string& parentMaterialName);
 
 public slots:
     void loadURLFinished(bool success);

@@ -1,5 +1,6 @@
 set(TARGET_NAME procedural)
-AUTOSCRIBE_SHADER_LIB(gpu graphics)
+AUTOSCRIBE_SHADER_LIB(gpu graphics render-utils)
 setup_hifi_library()
-link_hifi_libraries(shared gpu networking graphics model-networking ktx image)
-
+link_hifi_libraries(shared gpu networking graphics model-networking ktx image render-utils)
+include_hifi_library_headers(render)
+include_hifi_library_headers(task)

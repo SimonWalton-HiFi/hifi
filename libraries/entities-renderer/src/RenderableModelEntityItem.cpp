@@ -1514,7 +1514,7 @@ void ModelEntityRenderer::addMaterial(graphics::MaterialLayer material, const st
     }
 }
 
-void ModelEntityRenderer::removeMaterial(graphics::MaterialPointer material, const std::string& parentMaterialName) {
+void ModelEntityRenderer::removeMaterial(graphics::ProceduralMaterialPointer material, const std::string& parentMaterialName) {
     Parent::removeMaterial(material, parentMaterialName);
     if (_model && _model->fetchRenderItemIDs().size() > 0) {
         _model->removeMaterial(material, parentMaterialName);

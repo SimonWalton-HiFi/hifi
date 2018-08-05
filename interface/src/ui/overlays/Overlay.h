@@ -15,6 +15,8 @@
 #include <SharedUtil.h> // for xColor
 #include <render/Scene.h>
 
+#include <procedural/ProceduralMaterial.h>
+
 class OverlayID : public QUuid {
 public:
     OverlayID() : QUuid() {}
@@ -95,7 +97,7 @@ public:
     void setStackOrder(unsigned int stackOrder) { _stackOrder = stackOrder; }
 
     virtual void addMaterial(graphics::MaterialLayer material, const std::string& parentMaterialName);
-    virtual void removeMaterial(graphics::MaterialPointer material, const std::string& parentMaterialName);
+    virtual void removeMaterial(graphics::ProceduralMaterialPointer material, const std::string& parentMaterialName);
 
 protected:
     float updatePulse();

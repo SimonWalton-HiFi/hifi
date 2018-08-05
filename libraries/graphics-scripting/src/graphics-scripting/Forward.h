@@ -11,7 +11,7 @@
 #include <DependencyManager.h>
 #include <SpatiallyNestable.h>
 
-#include "graphics/Material.h"
+#include "procedural/ProceduralMaterial.h"
 #include "graphics/TextureMap.h"
 
 namespace graphics {
@@ -59,11 +59,12 @@ namespace scriptable {
      * @property {string} occlusionMap
      * @property {string} lightmapMap
      * @property {string} scatteringMap
+     * @property {string} procedural
      */
     class ScriptableMaterial {
     public:
         ScriptableMaterial() {}
-        ScriptableMaterial(const graphics::MaterialPointer& material);
+        ScriptableMaterial(const graphics::ProceduralMaterialPointer& material);
         ScriptableMaterial(const ScriptableMaterial& material) { *this = material; }
         ScriptableMaterial& operator=(const ScriptableMaterial& material);
 
@@ -88,6 +89,7 @@ namespace scriptable {
         QString occlusionMap;
         QString lightmapMap;
         QString scatteringMap;
+        QString procedural;
     };
 
     /**jsdoc

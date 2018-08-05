@@ -143,7 +143,7 @@ void MaterialEntityItem::setUnscaledDimensions(const glm::vec3& value) {
     EntityItem::setUnscaledDimensions(ENTITY_ITEM_DEFAULT_DIMENSIONS);
 }
 
-std::shared_ptr<NetworkMaterial> MaterialEntityItem::getMaterial() const {
+graphics::ProceduralMaterialPointer MaterialEntityItem::getMaterial() const {
     auto material = _parsedMaterials.networkMaterials.find(_currentMaterialName);
     if (material != _parsedMaterials.networkMaterials.end()) {
         return material->second;
@@ -164,7 +164,7 @@ void MaterialEntityItem::setMaterialURL(const QString& materialURLString, bool m
         }
 
         if (usingMaterialData) {
-            _parsedMaterials = NetworkMaterialResource::parseJSONMaterials(QJsonDocument::fromJson(getMaterialData().toUtf8()), materialURLString);
+            _parsedMaterials = ProceduralMaterialResource::parseJSONMaterials(QJsonDocument::fromJson(getMaterialData().toUtf8()), materialURLString);
 
             // Since our material changed, the current name might not be valid anymore, so we need to update
             setCurrentMaterialName(_currentMaterialName);
@@ -257,7 +257,7 @@ void MaterialEntityItem::setParentID(const QUuid& parentID) {
 }
 
 void MaterialEntityItem::removeMaterial() {
-    graphics::MaterialPointer material = getMaterial();
+    graphics::ProceduralMaterialPointer material = getMaterial();
     if (!material) {
         return;
     }
@@ -284,7 +284,7 @@ void MaterialEntityItem::removeMaterial() {
 
 void MaterialEntityItem::applyMaterial() {
     _retryApply = false;
-    graphics::MaterialPointer material = getMaterial();
+    graphics::ProceduralMaterialPointer material = getMaterial();
     QUuid parentID = getParentID();
     if (!material || parentID.isNull()) {
         return;

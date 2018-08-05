@@ -67,7 +67,7 @@ public:
     void setGroupCulled(bool groupCulled);
 
     void addMaterial(graphics::MaterialLayer material, const std::string& parentMaterialName) override;
-    void removeMaterial(graphics::MaterialPointer material, const std::string& parentMaterialName) override;
+    void removeMaterial(graphics::ProceduralMaterialPointer material, const std::string& parentMaterialName) override;
 
     virtual scriptable::ScriptableModelBase getScriptableModel() override;
     virtual bool canReplaceModelMeshPart(int meshIndex, int partIndex) override;

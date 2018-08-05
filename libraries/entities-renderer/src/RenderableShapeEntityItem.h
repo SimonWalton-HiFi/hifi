@@ -11,7 +11,6 @@
 
 #include "RenderableEntityItem.h"
 
-#include <procedural/Procedural.h>
 #include <ShapeEntityItem.h>
 
 namespace render { namespace entities { 
@@ -38,10 +37,8 @@ private:
 
     bool useMaterialPipeline() const;
 
-    Procedural _procedural;
-    QString _lastUserData;
     entity::Shape _shape { entity::Sphere };
-    std::shared_ptr<graphics::Material> _material;
+    graphics::ProceduralMaterialPointer _material;
     glm::vec3 _position;
     glm::vec3 _dimensions;
     glm::quat _orientation;

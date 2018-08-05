@@ -12,15 +12,10 @@
 
 #include <gpu/Batch.h>
 #include <DependencyManager.h>
-#include <StencilMaskPass.h>
 #include <GeometryCache.h>
 #include <PerfStat.h>
 
-#include "render-utils/simple_vert.h"
-#include "render-utils/simple_frag.h"
-#include "render-utils/simple_transparent_frag.h"
-#include "render-utils/forward_simple_frag.h"
-#include "render-utils/forward_simple_transparent_frag.h"
+#include <procedural/Procedural.h>
 
 #include "RenderPipelines.h"
 
@@ -36,29 +31,11 @@ using namespace render::entities;
 static const float SPHERE_ENTITY_SCALE = 0.5f;
 
 
-ShapeEntityRenderer::ShapeEntityRenderer(const EntityItemPointer& entity) : Parent(entity) {
-    _procedural._vertexSource = simple_vert::getSource();
-    // FIXME: Setup proper uniform slots and use correct pipelines for forward rendering
-    _procedural._opaquefragmentSource = simple_frag::getSource();
-    // FIXME: Transparent procedural entities only seem to work if they use the opaque pipelines
-    //_procedural._transparentfragmentSource = simple_transparent_frag::getSource();
-    _procedural._transparentfragmentSource = simple_frag::getSource();
-    _procedural._opaqueState->setCullMode(gpu::State::CULL_NONE);
-    _procedural._opaqueState->setDepthTest(true, true, gpu::LESS_EQUAL);
-    PrepareStencil::testMaskDrawShape(*_procedural._opaqueState);
-    _procedural._opaqueState->setBlendFunction(false,
-        gpu::State::SRC_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::INV_SRC_ALPHA,
-        gpu::State::FACTOR_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::ONE);
-    _procedural._transparentState->setCullMode(gpu::State::CULL_BACK);
-    _procedural._transparentState->setDepthTest(true, true, gpu::LESS_EQUAL);
-    PrepareStencil::testMask(*_procedural._transparentState);
-    _procedural._transparentState->setBlendFunction(true,
-        gpu::State::SRC_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::INV_SRC_ALPHA,
-        gpu::State::FACTOR_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::ONE);
-}
+ShapeEntityRenderer::ShapeEntityRenderer(const EntityItemPointer& entity) : Parent(entity) {}
 
 bool ShapeEntityRenderer::needsRenderUpdate() const {
-    if (_procedural.isEnabled() && _procedural.isFading()) {
+    auto mat = _materials.find("0");
+    if (mat != _materials.end() && mat->second.top().material && mat->second.top().material->getProcedural().isEnabled() && mat->second.top().material->getProcedural().isFading()) {
         return true;
     }
 
@@ -66,9 +43,6 @@ bool ShapeEntityRenderer::needsRenderUpdate() const {
 }
 
 bool ShapeEntityRenderer::needsRenderUpdateFromTypedEntity(const TypedEntityPointer& entity) const {
-    if (_lastUserData != entity->getUserData()) {
-        return true;
-    }
     if (_material != entity->getMaterial()) {
         return true;
     }
@@ -86,15 +60,13 @@ bool ShapeEntityRenderer::needsRenderUpdateFromTypedEntity(const TypedEntityPoin
 
 void ShapeEntityRenderer::doRenderUpdateSynchronousTyped(const ScenePointer& scene, Transaction& transaction, const TypedEntityPointer& entity) {
     withWriteLock([&] {
-        auto userData = entity->getUserData();
-        if (_lastUserData != userData) {
-            _lastUserData = userData;
-            _procedural.setProceduralData(ProceduralData::parse(_lastUserData));
+        bool updateProcedural = false;
+        if (_material != entity->getMaterial()) {
+            removeMaterial(_material, "0");
+            _material = entity->getMaterial();
+            addMaterial(graphics::MaterialLayer(_material, 0), "0");
+            updateProcedural = true;
         }
-
-        removeMaterial(_material, "0");
-        _material = entity->getMaterial();
-        addMaterial(graphics::MaterialLayer(_material, 0), "0");
 
         _shape = entity->getShape();
     });
@@ -119,25 +91,24 @@ void ShapeEntityRenderer::doRenderUpdateSynchronousTyped(const ScenePointer& sce
 
 void ShapeEntityRenderer::doRenderUpdateAsynchronousTyped(const TypedEntityPointer& entity) {
     withReadLock([&] {
-        if (_procedural.isEnabled() && _procedural.isFading()) {
-            float isFading = Interpolate::calculateFadeRatio(_procedural.getFadeStartTime()) < 1.0f;
-            _procedural.setIsFading(isFading);
+        auto mat = _materials.find("0");
+        if (mat != _materials.end() && mat->second.top().material && mat->second.top().material->getProcedural().isEnabled() && mat->second.top().material->getProcedural().isFading()) {
+            float isFading = Interpolate::calculateFadeRatio(mat->second.top().material->getProcedural().getFadeStartTime()) < 1.0f;
+            mat->second.top().material->editProcedural().setIsFading(isFading);
         }
     });
 }
 
 bool ShapeEntityRenderer::isTransparent() const {
-    if (_procedural.isEnabled() && _procedural.isFading()) {
-        return Interpolate::calculateFadeRatio(_procedural.getFadeStartTime()) < 1.0f;
-    }
-
     auto mat = _materials.find("0");
-    if (mat != _materials.end()) {
-        if (mat->second.top().material) {
-            auto matKey = mat->second.top().material->getKey();
-            if (matKey.isTranslucent()) {
-                return true;
-            }
+    if (mat != _materials.end() && mat->second.top().material) {
+        if (mat->second.top().material->getProcedural().isEnabled() && mat->second.top().material->getProcedural().isFading()) {
+            return Interpolate::calculateFadeRatio(mat->second.top().material->getProcedural().getFadeStartTime()) < 1.0f;
+        }
+
+        auto matKey = mat->second.top().material->getKey();
+        if (matKey.isTranslucent()) {
+            return true;
         }
     }
 
@@ -160,15 +131,15 @@ ItemKey ShapeEntityRenderer::getKey() {
 }
 
 bool ShapeEntityRenderer::useMaterialPipeline() const {
+    auto mat = _materials.find("0");
     bool proceduralReady = resultWithReadLock<bool>([&] {
-        return _procedural.isReady();
+        return mat != _materials.end() && mat->second.top().material && mat->second.top().material->getProcedural().isReady();
     });
     if (proceduralReady) {
         return false;
     }
 
     graphics::MaterialKey drawMaterialKey;
-    auto mat = _materials.find("0");
     if (mat != _materials.end() && mat->second.top().material) {
         drawMaterialKey = mat->second.top().material->getKey();
     }
@@ -226,7 +197,7 @@ void ShapeEntityRenderer::doRender(RenderArgs* args) {
 
     gpu::Batch& batch = *args->_batch;
 
-    std::shared_ptr<graphics::Material> mat;
+    graphics::ProceduralMaterialPointer mat;
     auto geometryCache = DependencyManager::get<GeometryCache>();
     GeometryCache::Shape geometryShape;
     bool proceduralRender = false;
@@ -237,10 +208,10 @@ void ShapeEntityRenderer::doRender(RenderArgs* args) {
         mat = _materials["0"].top().material;
         if (mat) {
             outColor = glm::vec4(mat->getAlbedo(), mat->getOpacity());
-            if (_procedural.isReady()) {
-                outColor = _procedural.getColor(outColor);
-                outColor.a *= _procedural.isFading() ? Interpolate::calculateFadeRatio(_procedural.getFadeStartTime()) : 1.0f;
-                _procedural.prepare(batch, _position, _dimensions, _orientation, outColor);
+            if (mat->getProcedural().isReady()) {
+                outColor = mat->getProcedural().getColor(outColor);
+                outColor.a *= mat->getProcedural().isFading() ? Interpolate::calculateFadeRatio(mat->getProcedural().getFadeStartTime()) : 1.0f;
+                mat->editProcedural().prepare(batch, _position, _dimensions, _orientation, outColor);
                 proceduralRender = true;
             }
         }

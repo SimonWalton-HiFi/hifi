@@ -1855,7 +1855,7 @@ void Avatar::addMaterial(graphics::MaterialLayer material, const std::string& pa
     }
 }
 
-void Avatar::removeMaterial(graphics::MaterialPointer material, const std::string& parentMaterialName) {
+void Avatar::removeMaterial(graphics::ProceduralMaterialPointer material, const std::string& parentMaterialName) {
     std::lock_guard<std::mutex> lock(_materialsLock);
     _materials[parentMaterialName].remove(material);
     if (_skeletonModel && _skeletonModel->fetchRenderItemIDs().size() > 0) {

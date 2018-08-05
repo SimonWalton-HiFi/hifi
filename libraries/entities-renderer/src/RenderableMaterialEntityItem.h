@@ -13,8 +13,6 @@
 
 #include <MaterialEntityItem.h>
 
-class NetworkMaterial;
-
 namespace render { namespace entities { 
 
 class MaterialEntityRenderer : public TypedEntityRenderer<MaterialEntityItem> {
@@ -36,7 +34,7 @@ private:
     glm::vec2 _materialMappingScale;
     float _materialMappingRot;
 
-    std::shared_ptr<NetworkMaterial> _drawMaterial;
+    graphics::ProceduralMaterialPointer _drawMaterial;
 };
 
 } } 

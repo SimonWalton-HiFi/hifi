@@ -97,7 +97,7 @@ void MaterialEntityRenderer::doRender(RenderArgs* args) {
     // Don't render if our parent is set or our material is null
     QUuid parentID;
     Transform renderTransform;
-    graphics::MaterialPointer drawMaterial;
+    graphics::ProceduralMaterialPointer drawMaterial;
     Transform textureTransform;
     withReadLock([&] {
         parentID = _parentID;

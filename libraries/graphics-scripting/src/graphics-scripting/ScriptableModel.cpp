@@ -14,7 +14,7 @@
 
 #include "GraphicsScriptingUtil.h"
 #include "ScriptableMesh.h"
-#include "graphics/Material.h"
+#include "procedural/ProceduralMaterial.h"
 #include "image/Image.h"
 
 // #define SCRIPTABLE_MESH_DEBUG 1
@@ -41,11 +41,12 @@ scriptable::ScriptableMaterial& scriptable::ScriptableMaterial::operator=(const 
     occlusionMap = material.occlusionMap;
     lightmapMap = material.lightmapMap;
     scatteringMap = material.scatteringMap;
+    procedural = material.procedural;
 
     return *this;
 }
 
-scriptable::ScriptableMaterial::ScriptableMaterial(const graphics::MaterialPointer& material) :
+scriptable::ScriptableMaterial::ScriptableMaterial(const graphics::ProceduralMaterialPointer& material) :
     name(material->getName().c_str()),
     model(material->getModel().c_str()),
     opacity(material->getOpacity()),
@@ -54,7 +55,8 @@ scriptable::ScriptableMaterial::ScriptableMaterial(const graphics::MaterialPoint
     scattering(material->getScattering()),
     unlit(material->isUnlit()),
     emissive(material->getEmissive()),
-    albedo(material->getAlbedo())
+    albedo(material->getAlbedo()),
+    procedural(material->getProceduralString())
 {
     auto map = material->getTextureMap(graphics::Material::MapChannel::EMISSIVE_MAP);
     if (map && map->getTextureSource()) {

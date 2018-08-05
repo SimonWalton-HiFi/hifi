@@ -710,7 +710,7 @@ void ModelOverlay::addMaterial(graphics::MaterialLayer material, const std::stri
     }
 }
 
-void ModelOverlay::removeMaterial(graphics::MaterialPointer material, const std::string& parentMaterialName) {
+void ModelOverlay::removeMaterial(graphics::ProceduralMaterialPointer material, const std::string& parentMaterialName) {
     Overlay::removeMaterial(material, parentMaterialName);
     if (_model && _model->fetchRenderItemIDs().size() > 0) {
         _model->removeMaterial(material, parentMaterialName);
