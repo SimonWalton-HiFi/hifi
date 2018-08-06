@@ -60,30 +60,34 @@ ItemKey MaterialEntityRenderer::getKey() {
 }
 
 ShapeKey MaterialEntityRenderer::getShapeKey() {
-    graphics::MaterialKey drawMaterialKey;
-    if (_drawMaterial) {
-        drawMaterialKey = _drawMaterial->getKey();
-    }
-
-    bool isTranslucent = drawMaterialKey.isTranslucent();
-    bool hasTangents = drawMaterialKey.isNormalMap();
-    bool hasLightmap = drawMaterialKey.isLightmapMap();
-    bool isUnlit = drawMaterialKey.isUnlit();
-    
     ShapeKey::Builder builder;
-    builder.withMaterial();
+    graphics::MaterialKey drawMaterialKey;
+    drawMaterialKey = _drawMaterial->getKey();
+    bool isTranslucent = drawMaterialKey.isTranslucent();
+    if (_drawMaterial->getProcedural().isReady()) {
+        builder.withOwnPipeline();
+        if (isTranslucent) {
+            builder.withTranslucent();
+        }
+    } else {
+        bool hasTangents = drawMaterialKey.isNormalMap();
+        bool hasLightmap = drawMaterialKey.isLightmapMap();
+        bool isUnlit = drawMaterialKey.isUnlit();
 
-    if (isTranslucent) {
-        builder.withTranslucent();
-    }
-    if (hasTangents) {
-        builder.withTangents();
-    }
-    if (hasLightmap) {
-        builder.withLightmap();
-    }
-    if (isUnlit) {
-        builder.withUnlit();
+        builder.withMaterial();
+
+        if (isTranslucent) {
+            builder.withTranslucent();
+        }
+        if (hasTangents) {
+            builder.withTangents();
+        }
+        if (hasLightmap) {
+            builder.withLightmap();
+        }
+        if (isUnlit) {
+            builder.withUnlit();
+        }
     }
 
     return builder.build();
@@ -98,6 +102,8 @@ void MaterialEntityRenderer::doRender(RenderArgs* args) {
     QUuid parentID;
     Transform renderTransform;
     graphics::ProceduralMaterialPointer drawMaterial;
+    bool proceduralRender = false;
+    glm::vec4 outColor;
     Transform textureTransform;
     withReadLock([&] {
         parentID = _parentID;
@@ -106,20 +112,31 @@ void MaterialEntityRenderer::doRender(RenderArgs* args) {
         textureTransform.setTranslation(glm::vec3(_materialMappingPos, 0));
         textureTransform.setRotation(glm::vec3(0, 0, glm::radians(_materialMappingRot)));
         textureTransform.setScale(glm::vec3(_materialMappingScale, 1));
+        if (_drawMaterial->getProcedural().isReady()) {
+            outColor = _drawMaterial->getProcedural().getColor(outColor);
+            outColor.a = 1.0f;
+            _drawMaterial->editProcedural().prepare(batch, renderTransform.getTranslation(), renderTransform.getScale(), renderTransform.getRotation(), outColor);
+            proceduralRender = true;
+        }
     });
-    if (!parentID.isNull() || !drawMaterial) {
+    if (!parentID.isNull()) {
         return;
     }
 
     batch.setModelTransform(renderTransform);
-    drawMaterial->setTextureTransforms(textureTransform);
 
-    // bind the material
-    RenderPipelines::bindMaterial(drawMaterial, batch, args->_enableTexturing);
-    args->_details._materialSwitches++;
+    if (!proceduralRender) {
+        drawMaterial->setTextureTransforms(textureTransform);
 
-    // Draw!
-    DependencyManager::get<GeometryCache>()->renderSphere(batch);
+        // bind the material
+        RenderPipelines::bindMaterial(drawMaterial, batch, args->_enableTexturing);
+        args->_details._materialSwitches++;
+
+        // Draw!
+        DependencyManager::get<GeometryCache>()->renderSphere(batch);
+    } else {
+        DependencyManager::get<GeometryCache>()->renderShape(batch, GeometryCache::Shape::Sphere, outColor);
+    }
 
     args->_details._trianglesRendered += (int)DependencyManager::get<GeometryCache>()->getSphereTriangleCount();
 }

@@ -188,7 +188,8 @@ ShapeKey ShapeEntityRenderer::getShapeKey() {
         return builder.build();
     } else {
         ShapeKey::Builder builder;
-        if (_procedural.isReady()) {
+        auto mat = _materials.find("0");
+        if (mat != _materials.end() && mat->second.top().material && mat->second.top().material->getProcedural().isReady()) {
             builder.withOwnPipeline();
         }
         if (isTransparent()) {
