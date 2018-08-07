@@ -15,8 +15,6 @@
 #include <GeometryCache.h>
 #include <PerfStat.h>
 
-#include <procedural/Procedural.h>
-
 #include "RenderPipelines.h"
 
 //#define SHAPE_ENTITY_USE_FADE_EFFECT
@@ -29,7 +27,6 @@ using namespace render::entities;
 // Sphere entities should fit inside a cube entity of the same size, so a sphere that has dimensions 1x1x1 
 // is a half unit sphere.  However, the geometry cache renders a UNIT sphere, so we need to scale down.
 static const float SPHERE_ENTITY_SCALE = 0.5f;
-
 
 ShapeEntityRenderer::ShapeEntityRenderer(const EntityItemPointer& entity) : Parent(entity) {}
 

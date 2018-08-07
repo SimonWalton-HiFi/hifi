@@ -63,12 +63,11 @@ ShapeKey MaterialEntityRenderer::getShapeKey() {
     ShapeKey::Builder builder;
     graphics::MaterialKey drawMaterialKey;
     drawMaterialKey = _drawMaterial->getKey();
-    bool isTranslucent = drawMaterialKey.isTranslucent();
+    if (drawMaterialKey.isTranslucent()) {
+        builder.withTranslucent();
+    }
     if (_drawMaterial->getProcedural().isReady()) {
         builder.withOwnPipeline();
-        if (isTranslucent) {
-            builder.withTranslucent();
-        }
     } else {
         bool hasTangents = drawMaterialKey.isNormalMap();
         bool hasLightmap = drawMaterialKey.isLightmapMap();
@@ -76,9 +75,6 @@ ShapeKey MaterialEntityRenderer::getShapeKey() {
 
         builder.withMaterial();
 
-        if (isTranslucent) {
-            builder.withTranslucent();
-        }
         if (hasTangents) {
             builder.withTangents();
         }
