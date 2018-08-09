@@ -122,11 +122,13 @@ void MaterialEntityRenderer::doRender(RenderArgs* args) {
     batch.setModelTransform(renderTransform);
 
     if (!proceduralRender) {
-        drawMaterial->setTextureTransforms(textureTransform);
+        if (args->_renderMode != render::Args::RenderMode::SHADOW_RENDER_MODE) {
+            drawMaterial->setTextureTransforms(textureTransform);
 
-        // bind the material
-        RenderPipelines::bindMaterial(drawMaterial, batch, args->_enableTexturing);
-        args->_details._materialSwitches++;
+            // bind the material
+            RenderPipelines::bindMaterial(drawMaterial, batch, args->_enableTexturing);
+            args->_details._materialSwitches++;
+        }
 
         // Draw!
         DependencyManager::get<GeometryCache>()->renderSphere(batch);

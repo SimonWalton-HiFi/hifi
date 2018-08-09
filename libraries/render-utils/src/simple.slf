@@ -121,5 +121,4 @@ void main(void) {
             DEFAULT_SCATTERING);
     }
 #endif
-
 }
