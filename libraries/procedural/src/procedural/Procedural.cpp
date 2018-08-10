@@ -21,6 +21,7 @@
 #include <GLMHelpers.h>
 #include <NetworkingConstants.h>
 #include <shaders/Shaders.h>
+#include <StencilMaskPass.h>
 
 #include "ShaderConstants.h"
 #include "Logging.h"
@@ -105,10 +106,19 @@ void ProceduralData::parse(const QJsonObject& proceduralData) {
 //}
 
 Procedural::Procedural() {
+    _opaqueState->setCullMode(gpu::State::CULL_BACK);
+    _opaqueState->setDepthTest(true, true, gpu::LESS_EQUAL);
+    _opaqueState->setBlendFunction(false, gpu::State::SRC_ALPHA, gpu::State::BLEND_OP_ADD,
+                                   gpu::State::INV_SRC_ALPHA, gpu::State::FACTOR_ALPHA, gpu::State::BLEND_OP_ADD,
+                                   gpu::State::ONE);
+    PrepareStencil::testMaskDrawShape(*_opaqueState);
+
     _transparentState->setCullMode(gpu::State::CULL_NONE);
     _transparentState->setDepthTest(true, true, gpu::LESS_EQUAL);
-    _transparentState->setBlendFunction(true, gpu::State::SRC_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::INV_SRC_ALPHA,
-                                        gpu::State::FACTOR_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::ONE);
+    _transparentState->setBlendFunction(true, gpu::State::SRC_ALPHA, gpu::State::BLEND_OP_ADD,
+                                        gpu::State::INV_SRC_ALPHA, gpu::State::FACTOR_ALPHA,
+                                        gpu::State::BLEND_OP_ADD, gpu::State::ONE);
+    PrepareStencil::testMask(*_transparentState);
 }
 
 void Procedural::setProceduralData(const ProceduralData& proceduralData) {
@@ -348,7 +358,7 @@ void Procedural::setupUniforms(bool transparent) {
         QJsonValue value = _data.uniforms[key];
         if (value.isDouble()) {
             float v = value.toDouble();
-            _uniforms.push_back([=](gpu::Batch& batch) { batch._glUniform1f(slot, v); });
+            _uniforms.push_back([slot, v](gpu::Batch& batch) { batch._glUniform1f(slot, v); });
         } else if (value.isArray()) {
             auto valueArray = value.toArray();
             switch (valueArray.size()) {
@@ -357,13 +367,13 @@ void Procedural::setupUniforms(bool transparent) {
 
                 case 1: {
                     float v = valueArray[0].toDouble();
-                    _uniforms.push_back([=](gpu::Batch& batch) { batch._glUniform1f(slot, v); });
+                    _uniforms.push_back([slot, v](gpu::Batch& batch) { batch._glUniform1f(slot, v); });
                     break;
                 }
 
                 case 2: {
                     glm::vec2 v{ valueArray[0].toDouble(), valueArray[1].toDouble() };
-                    _uniforms.push_back([=](gpu::Batch& batch) { batch._glUniform2f(slot, v.x, v.y); });
+                    _uniforms.push_back([slot, v](gpu::Batch& batch) { batch._glUniform2f(slot, v.x, v.y); });
                     break;
                 }
 
@@ -373,7 +383,7 @@ void Procedural::setupUniforms(bool transparent) {
                         valueArray[1].toDouble(),
                         valueArray[2].toDouble(),
                     };
-                    _uniforms.push_back([=](gpu::Batch& batch) { batch._glUniform3f(slot, v.x, v.y, v.z); });
+                    _uniforms.push_back([slot, v](gpu::Batch& batch) { batch._glUniform3f(slot, v.x, v.y, v.z); });
                     break;
                 }
 
@@ -385,7 +395,7 @@ void Procedural::setupUniforms(bool transparent) {
                         valueArray[2].toDouble(),
                         valueArray[3].toDouble(),
                     };
-                    _uniforms.push_back([=](gpu::Batch& batch) { batch._glUniform4f(slot, v.x, v.y, v.z, v.w); });
+                    _uniforms.push_back([slot, v](gpu::Batch& batch) { batch._glUniform4f(slot, v.x, v.y, v.z, v.w); });
                     break;
                 }
             }
@@ -393,7 +403,7 @@ void Procedural::setupUniforms(bool transparent) {
     }
 
     if (uniformSlots.isValid(procedural::slot::uniform::Time)) {
-        _uniforms.push_back([=](gpu::Batch& batch) {
+        _uniforms.push_back([this](gpu::Batch& batch) {
             // Minimize floating point error by doing an integer division to milliseconds, before the floating point division to seconds
             float time = (float)((usecTimestampNow() - _start) / USECS_PER_MSEC) / MSECS_PER_SECOND;
             batch._glUniform(procedural::slot::uniform::Time, time);
@@ -401,7 +411,7 @@ void Procedural::setupUniforms(bool transparent) {
     }
 
     if (uniformSlots.isValid(procedural::slot::uniform::Date)) {
-        _uniforms.push_back([=](gpu::Batch& batch) {
+        _uniforms.push_back([](gpu::Batch& batch) {
             QDateTime now = QDateTime::currentDateTimeUtc();
             QDate date = now.date();
             QTime time = now.time();
@@ -418,24 +428,22 @@ void Procedural::setupUniforms(bool transparent) {
     }
 
     if (uniformSlots.isValid(procedural::slot::uniform::FrameCount)) {
-        _uniforms.push_back([=](gpu::Batch& batch) { batch._glUniform(procedural::slot::uniform::FrameCount, ++_frameCount); });
+        _uniforms.push_back([this](gpu::Batch& batch) { batch._glUniform(procedural::slot::uniform::FrameCount, ++_frameCount); });
     }
 
     if (uniformSlots.isValid(procedural::slot::uniform::Scale)) {
         // FIXME move into the 'set once' section, since this doesn't change over time
-        _uniforms.push_back([=](gpu::Batch& batch) { batch._glUniform(procedural::slot::uniform::Scale, _entityDimensions); });
+        _uniforms.push_back([this](gpu::Batch& batch) { batch._glUniform(procedural::slot::uniform::Scale, _entityDimensions); });
     }
 
     if (uniformSlots.isValid(procedural::slot::uniform::Orientation)) {
         // FIXME move into the 'set once' section, since this doesn't change over time
-        _uniforms.push_back(
-            [=](gpu::Batch& batch) { batch._glUniform(procedural::slot::uniform::Orientation, _entityOrientation); });
+        _uniforms.push_back([this](gpu::Batch& batch) { batch._glUniform(procedural::slot::uniform::Orientation, _entityOrientation); });
     }
 
     if (uniformSlots.isValid(procedural::slot::uniform::Position)) {
         // FIXME move into the 'set once' section, since this doesn't change over time
-        _uniforms.push_back(
-            [=](gpu::Batch& batch) { batch._glUniform(procedural::slot::uniform::Orientation, _entityPosition); });
+        _uniforms.push_back([this](gpu::Batch& batch) { batch._glUniform(procedural::slot::uniform::Position, _entityPosition); });
     }
 }
 
