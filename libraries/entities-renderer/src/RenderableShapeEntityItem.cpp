@@ -156,14 +156,12 @@ bool ShapeEntityRenderer::useMaterialPipeline() const {
 
 ShapeKey ShapeEntityRenderer::getShapeKey() {
     ShapeKey::Builder builder;
+    auto mat = _materials.find("0");
     if (isTransparent()) {
         builder.withTranslucent();
     }
     if (useMaterialPipeline()) {
-        graphics::MaterialKey drawMaterialKey;
-        if (_materials["0"].top().material) {
-            drawMaterialKey = _materials["0"].top().material->getKey();
-        }
+        graphics::MaterialKey drawMaterialKey = mat->second.top().material->getKey();
 
         bool hasTangents = drawMaterialKey.isNormalMap();
         bool hasLightmap = drawMaterialKey.isLightmapMap();
@@ -181,11 +179,11 @@ ShapeKey ShapeEntityRenderer::getShapeKey() {
             builder.withUnlit();
         }
     } else {
-        auto mat = _materials.find("0");
         if (mat != _materials.end() && mat->second.top().material && mat->second.top().material->getProcedural().isReady()) {
             builder.withOwnPipeline();
         }
     }
+
     return builder.build();
 }
 

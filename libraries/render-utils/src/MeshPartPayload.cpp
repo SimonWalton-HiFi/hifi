@@ -104,22 +104,31 @@ Item::Bound MeshPartPayload::getBound() const {
 }
 
 ShapeKey MeshPartPayload::getShapeKey() const {
+    graphics::ProceduralMaterialPointer material;
     graphics::MaterialKey drawMaterialKey;
     if (topMaterialExists()) {
+        material = _drawMaterials.top().material;
         drawMaterialKey = _drawMaterials.top().material->getKey();
     }
 
     ShapeKey::Builder builder;
-    builder.withMaterial();
-
     if (drawMaterialKey.isTranslucent()) {
         builder.withTranslucent();
     }
-    if (drawMaterialKey.isNormalMap()) {
-        builder.withTangents();
-    }
-    if (drawMaterialKey.isLightmapMap()) {
-        builder.withLightmap();
+    if (material && material->getProcedural().isReady()) {
+        builder.withOwnPipeline();
+    } else {
+        builder.withMaterial();
+
+        if (drawMaterialKey.isNormalMap()) {
+            builder.withTangents();
+        }
+        if (drawMaterialKey.isLightmapMap()) {
+            builder.withLightmap();
+        }
+        if (drawMaterialKey.isUnlit()) {
+            builder.withUnlit();
+        }
     }
     return builder.build();
 }
@@ -156,10 +165,14 @@ void MeshPartPayload::render(RenderArgs* args) {
     //Bind the index buffer and vertex buffer and Blend shapes if needed
     bindMesh(batch);
 
-    // apply material properties
-    if (args->_renderMode != render::Args::RenderMode::SHADOW_RENDER_MODE) {
-        RenderPipelines::bindMaterial(!_drawMaterials.empty() ? _drawMaterials.top().material : DEFAULT_MATERIAL, batch, args->_enableTexturing);
-        args->_details._materialSwitches++;
+    if (!_drawMaterials.empty() && _drawMaterials.top().material->getProcedural().isReady()) {
+        _drawMaterials.top().material->editProcedural().prepare(batch, _drawTransform.getTranslation(), _drawTransform.getScale(), _drawTransform.getRotation());
+    } else {
+         // apply material properties
+        if (args->_renderMode != render::Args::RenderMode::SHADOW_RENDER_MODE) {
+            RenderPipelines::bindMaterial(!_drawMaterials.empty() ? _drawMaterials.top().material : DEFAULT_MATERIAL, batch, args->_enableTexturing);
+            args->_details._materialSwitches++;
+        }
     }
 
     // Draw!
@@ -336,45 +349,51 @@ void ModelMeshPartPayload::setShapeKey(bool invalidateShapeKey, bool isWireframe
         return;
     }
 
+    graphics::ProceduralMaterialPointer material;
     graphics::MaterialKey drawMaterialKey;
     if (topMaterialExists()) {
+        material = _drawMaterials.top().material;
         drawMaterialKey = _drawMaterials.top().material->getKey();
     }
 
-    bool isTranslucent = drawMaterialKey.isTranslucent();
-    bool hasTangents = drawMaterialKey.isNormalMap() && _hasTangents;
-    bool hasLightmap = drawMaterialKey.isLightmapMap();
-    bool isUnlit = drawMaterialKey.isUnlit();
-
-    bool isSkinned = _isSkinned;
-
-    if (isWireframe) {
-        isTranslucent = hasTangents = hasLightmap = isSkinned = false;
-    }
-
     ShapeKey::Builder builder;
-    builder.withMaterial();
+    if (material && material->getProcedural().isReady()) {
+        builder.withOwnPipeline();
+    } else {
+        bool hasTangents = drawMaterialKey.isNormalMap() && _hasTangents;
+        bool hasLightmap = drawMaterialKey.isLightmapMap();
+        bool isUnlit = drawMaterialKey.isUnlit();
 
-    if (isTranslucent) {
-        builder.withTranslucent();
+        if (isWireframe) {
+            hasTangents = hasLightmap = isUnlit = false;
+        }
+
+        builder.withMaterial();
+
+        if (hasTangents) {
+            builder.withTangents();
+        }
+        if (hasLightmap) {
+            builder.withLightmap();
+        }
+        if (isUnlit) {
+            builder.withUnlit();
+        }
     }
-    if (hasTangents) {
-        builder.withTangents();
-    }
-    if (hasLightmap) {
-        builder.withLightmap();
-    }
-    if (isUnlit) {
-        builder.withUnlit();
-    }
-    if (isSkinned) {
-        builder.withSkinned();
-    }
+
     if (isWireframe) {
         builder.withWireframe();
-    }
-    if (isSkinned && useDualQuaternionSkinning) {
-        builder.withDualQuatSkinned();
+    } else {
+        if (drawMaterialKey.isTranslucent()) {
+            builder.withTranslucent();
+        }
+
+        if (_isSkinned) {
+            builder.withSkinned();
+            if (useDualQuaternionSkinning) {
+                builder.withDualQuatSkinned();
+            }
+        }
     }
 
     _shapeKey = builder.build();
@@ -418,10 +437,14 @@ void ModelMeshPartPayload::render(RenderArgs* args) {
     //Bind the index buffer and vertex buffer and Blend shapes if needed
     bindMesh(batch);
 
-    // apply material properties
-    if (args->_renderMode != render::Args::RenderMode::SHADOW_RENDER_MODE) {
-        RenderPipelines::bindMaterial(!_drawMaterials.empty() ? _drawMaterials.top().material : DEFAULT_MATERIAL, batch, args->_enableTexturing);
-        args->_details._materialSwitches++;
+    if (!_drawMaterials.empty() && _drawMaterials.top().material->getProcedural().isReady()) {
+        _drawMaterials.top().material->editProcedural().prepare(batch, _drawTransform.getTranslation(), _drawTransform.getScale(), _drawTransform.getRotation());
+    } else {
+         // apply material properties
+        if (args->_renderMode != render::Args::RenderMode::SHADOW_RENDER_MODE) {
+            RenderPipelines::bindMaterial(!_drawMaterials.empty() ? _drawMaterials.top().material : DEFAULT_MATERIAL, batch, args->_enableTexturing);
+            args->_details._materialSwitches++;
+        }
     }
 
     // Draw!
