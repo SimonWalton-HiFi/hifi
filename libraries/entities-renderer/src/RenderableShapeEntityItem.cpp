@@ -57,12 +57,10 @@ bool ShapeEntityRenderer::needsRenderUpdateFromTypedEntity(const TypedEntityPoin
 
 void ShapeEntityRenderer::doRenderUpdateSynchronousTyped(const ScenePointer& scene, Transaction& transaction, const TypedEntityPointer& entity) {
     withWriteLock([&] {
-        bool updateProcedural = false;
         if (_material != entity->getMaterial()) {
             removeMaterial(_material, "0");
             _material = entity->getMaterial();
             addMaterial(graphics::MaterialLayer(_material, 0), "0");
-            updateProcedural = true;
         }
 
         _shape = entity->getShape();
@@ -207,7 +205,7 @@ void ShapeEntityRenderer::doRender(RenderArgs* args) {
             if (mat->getProcedural().isReady()) {
                 outColor = mat->getProcedural().getColor(outColor);
                 outColor.a *= mat->getProcedural().isFading() ? Interpolate::calculateFadeRatio(mat->getProcedural().getFadeStartTime()) : 1.0f;
-                mat->editProcedural().prepare(batch, _position, _dimensions, _orientation, outColor);
+                mat->editProcedural().prepare(batch, _position, _dimensions, _orientation, ProceduralProgramKey(outColor.a < 1.0f));
                 proceduralRender = true;
             }
         }

@@ -111,7 +111,7 @@ void MaterialEntityRenderer::doRender(RenderArgs* args) {
         if (_drawMaterial->getProcedural().isReady()) {
             outColor = _drawMaterial->getProcedural().getColor(outColor);
             outColor.a = 1.0f;
-            _drawMaterial->editProcedural().prepare(batch, renderTransform.getTranslation(), renderTransform.getScale(), renderTransform.getRotation(), outColor);
+            _drawMaterial->editProcedural().prepare(batch, renderTransform.getTranslation(), renderTransform.getScale(), renderTransform.getRotation(), ProceduralProgramKey(outColor.a < 1.0f));
             proceduralRender = true;
         }
     });

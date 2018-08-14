@@ -245,7 +245,7 @@ void Procedural::prepare(gpu::Batch& batch,
                          const glm::vec3& position,
                          const glm::vec3& size,
                          const glm::quat& orientation,
-                         const glm::vec4& color) {
+                         const ProceduralProgramKey key) {
     _entityDimensions = size;
     _entityPosition = position;
     _entityOrientation = glm::mat3_cast(orientation);
@@ -262,60 +262,55 @@ void Procedural::prepare(gpu::Batch& batch,
         _shaderSource = _networkShader->_source;
     }
 
-    if (!_opaquePipeline || !_transparentPipeline || _shaderDirty) {
-        if (!_vertexShader) {
-            _vertexShader = gpu::Shader::createVertex(_vertexSource);
+    auto pipeline = _proceduralPrograms.find(key);
+    bool recompiledShader = false;
+    if (pipeline == _proceduralPrograms.end() || _shaderDirty) {
+        gpu::ShaderPointer vertexShader;
+        if (key.isSkinnedDQ()) {
+            vertexShader = gpu::Shader::createVertex(_vertexSourceSkinDQ);
+        } else if (key.isSkinned()) {
+            vertexShader = gpu::Shader::createVertex(_vertexSourceSkin);
+        } else {
+            vertexShader = gpu::Shader::createVertex(_vertexSource);
         }
 
         // Build the fragment shader
-        std::string opaqueShaderSource = replaceProceduralBlock(_opaquefragmentSource.getCode());
-        auto opaqueReflection = _opaquefragmentSource.getReflection();
-        auto& opaqueUniforms = opaqueReflection[gpu::Shader::BindingType::UNIFORM];
-        std::string transparentShaderSource = replaceProceduralBlock(_transparentfragmentSource.getCode());
-        auto transparentReflection = _transparentfragmentSource.getReflection();
-        auto& transparentUniforms = transparentReflection[gpu::Shader::BindingType::UNIFORM];
+        std::string fragmentShaderSource = replaceProceduralBlock(key.isTransparent() ? _transparentFragmentSource.getCode() : _opaqueFragmentSource.getCode());
+        auto reflection = key.isTransparent() ? _transparentFragmentSource.getReflection() : _opaqueFragmentSource.getReflection();
+        auto& uniforms = reflection[gpu::Shader::BindingType::UNIFORM];
 
         // Set any userdata specified uniforms
         int customSlot = procedural::slot::uniform::Custom;
         for (const auto& key : _data.uniforms.keys()) {
             std::string uniformName = key.toLocal8Bit().data();
-            opaqueUniforms[uniformName] = customSlot;
-            transparentUniforms[uniformName] = customSlot;
+            uniforms[uniformName] = customSlot;
             ++customSlot;
         }
 
         // Leave this here for debugging
-        // qCDebug(procedural) << "FragmentShader:\n" << fragmentShaderSource.c_str();
+        // qCDebug(proceduralLog) << "FragmentShader:\n" << fragmentShaderSource.c_str();
 
-        // TODO: THis is a simple fix, we need a cleaner way to provide the "hosting" program for procedural custom shaders to be defined together with the required bindings.
-        _opaqueFragmentShader = gpu::Shader::createPixel({ opaqueShaderSource, opaqueReflection });
-        _opaqueShader = gpu::Shader::createProgram(_vertexShader, _opaqueFragmentShader);
-        if (!transparentShaderSource.empty() && transparentShaderSource != opaqueShaderSource) {
-            _transparentFragmentShader = gpu::Shader::createPixel({ transparentShaderSource, transparentReflection });
-            _transparentShader = gpu::Shader::createProgram(_vertexShader, _transparentFragmentShader);
-        } else {
-            _transparentFragmentShader = _opaqueFragmentShader;
-            _transparentShader = _opaqueShader;
-        }
+        gpu::ShaderPointer fragmentShader = gpu::Shader::createPixel({ fragmentShaderSource, reflection });
+        gpu::ShaderPointer shader = gpu::Shader::createProgram(vertexShader, fragmentShader);
 
-        _opaquePipeline = gpu::Pipeline::create(_opaqueShader, _opaqueState);
-        _transparentPipeline = gpu::Pipeline::create(_transparentShader, _transparentState);
+        _proceduralShaders[key] = shader;
+        _proceduralPrograms[key] = gpu::Pipeline::create(shader, _opaqueState);
         _start = usecTimestampNow();
         _frameCount = 0;
+        recompiledShader = true;
     }
 
-    bool transparent = color.a < 1.0f;
-    batch.setPipeline(transparent ? _transparentPipeline : _opaquePipeline);
+    batch.setPipeline(recompiledShader ? _proceduralPrograms[key] : *pipeline);
 
-    if (_shaderDirty || _uniformsDirty || _prevTransparent != transparent) {
-        setupUniforms(transparent);
+    if (_shaderDirty || _uniformsDirty || _prevKey != key) {
+        setupUniforms(key);
     }
 
-    if (_shaderDirty || _uniformsDirty || _channelsDirty || _prevTransparent != transparent) {
-        setupChannels(_shaderDirty || _uniformsDirty, transparent);
+    if (_shaderDirty || _uniformsDirty || _channelsDirty || _prevKey != key) {
+        setupChannels(_shaderDirty || _uniformsDirty, key);
     }
 
-    _prevTransparent = transparent;
+    _prevKey = key;
     _shaderDirty = _uniformsDirty = _channelsDirty = false;
 
     for (auto lambda : _uniforms) {
@@ -341,10 +336,10 @@ void Procedural::prepare(gpu::Batch& batch,
     }
 }
 
-void Procedural::setupUniforms(bool transparent) {
+void Procedural::setupUniforms(ProceduralProgramKey key) {
     _uniforms.clear();
-    auto& pipeline = transparent ? _transparentShader : _opaqueShader;
-    const auto& uniformSlots = pipeline->getUniforms();
+    auto& shader = _proceduralShaders[key];
+    const auto& uniformSlots = shader->getUniforms();
     auto customUniformCount = _data.uniforms.keys().size();
 
     // Set any userdata specified uniforms
@@ -447,9 +442,9 @@ void Procedural::setupUniforms(bool transparent) {
     }
 }
 
-void Procedural::setupChannels(bool shouldCreate, bool transparent) {
-    auto& pipeline = transparent ? _transparentShader : _opaqueShader;
-    const auto& uniformSlots = pipeline->getUniforms();
+void Procedural::setupChannels(bool shouldCreate, ProceduralProgramKey key) {
+    auto& shader = _proceduralShaders[key];
+    const auto& uniformSlots = shader->getUniforms();
 
     if (uniformSlots.isValid(procedural::slot::uniform::ChannelResolution)) {
         if (!shouldCreate) {

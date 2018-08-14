@@ -39,6 +39,52 @@ struct ProceduralData {
     QJsonArray channels;
 };
 
+class ProceduralProgramKey {
+public:
+    enum FlagBit {
+        IS_TRANSPARENT_FLAG = 0,
+        IS_SKINNED_FLAG,
+        IS_SKINNED_DQ_FLAG,
+
+        NUM_FLAGS
+    };
+
+    enum Flag {
+        IS_TRANSPARENT = (1 << IS_TRANSPARENT_FLAG),
+        IS_SKINNED = (1 << IS_SKINNED_FLAG),
+        IS_SKINNED_DQ = (1 << IS_SKINNED_DQ_FLAG),
+    };
+    typedef unsigned short Flags;
+
+    bool isFlag(short flagNum) const { return bool((_flags & flagNum) != 0); }
+
+    bool isTransparent() const { return isFlag(IS_TRANSPARENT); }
+    bool isSkinned() const { return isFlag(IS_SKINNED); }
+    bool isSkinnedDQ() const { return isFlag(IS_SKINNED_DQ); }
+
+    Flags _flags = 0;
+    short _spare = 0;
+
+    int getRaw() const { return *reinterpret_cast<const int*>(this); }
+
+    ProceduralProgramKey(bool transparent = false, bool isSkinned = false, bool isSkinnedDQ = false) {
+        _flags = (transparent ? IS_TRANSPARENT : 0) | (isSkinned ? IS_SKINNED : 0) | (isSkinnedDQ ? IS_SKINNED_DQ : 0);
+    }
+
+    ProceduralProgramKey(int bitmask) : _flags(bitmask) {}
+};
+
+inline uint qHash(const ProceduralProgramKey& key, uint seed) {
+    return qHash(key.getRaw(), seed);
+}
+
+inline bool operator==(const ProceduralProgramKey& a, const ProceduralProgramKey& b) {
+    return a.getRaw() == b.getRaw();
+}
+
+inline bool operator!=(const ProceduralProgramKey& a, const ProceduralProgramKey& b) {
+    return a.getRaw() != b.getRaw();
+}
 
 // WARNING with threaded rendering it is the RESPONSIBILITY OF THE CALLER to ensure that 
 // calls to `setProceduralData` happen on the main thread and that calls to `ready` and `prepare` 
@@ -52,8 +98,7 @@ public:
 
     bool isReady() const;
     bool isEnabled() const { return _enabled; }
-    void prepare(gpu::Batch& batch, const glm::vec3& position, const glm::vec3& size, const glm::quat& orientation, const glm::vec4& color = glm::vec4(1));
-    const gpu::ShaderPointer& getOpaqueShader() const { return _opaqueShader; }
+    void prepare(gpu::Batch& batch, const glm::vec3& position, const glm::vec3& size, const glm::quat& orientation, const ProceduralProgramKey key = ProceduralProgramKey());
 
     glm::vec4 getColor(const glm::vec4& entityColor) const;
     quint64 getFadeStartTime() const { return _fadeStartTime; }
@@ -61,13 +106,17 @@ public:
     void setIsFading(bool isFading) { _isFading = isFading; }
     void setDoesFade(bool doesFade) { _doesFade = doesFade; }
 
+    // Vertex shaders
     gpu::Shader::Source _vertexSource;
-    gpu::Shader::Source _opaquefragmentSource;
-    gpu::Shader::Source _transparentfragmentSource;
+    gpu::Shader::Source _vertexSourceSkin;
+    gpu::Shader::Source _vertexSourceSkinDQ;
+
+    // Fragment shaders
+    gpu::Shader::Source _opaqueFragmentSource;
+    gpu::Shader::Source _transparentFragmentSource;
 
     gpu::StatePointer _opaqueState { std::make_shared<gpu::State>() };
     gpu::StatePointer _transparentState { std::make_shared<gpu::State>() };
-
 
 protected:
     // Procedural metadata
@@ -90,13 +139,9 @@ protected:
     // Rendering objects
     UniformLambdas _uniforms;
     NetworkTexturePointer _channels[MAX_PROCEDURAL_TEXTURE_CHANNELS];
-    gpu::PipelinePointer _opaquePipeline;
-    gpu::PipelinePointer _transparentPipeline;
-    gpu::ShaderPointer _vertexShader;
-    gpu::ShaderPointer _opaqueFragmentShader;
-    gpu::ShaderPointer _transparentFragmentShader;
-    gpu::ShaderPointer _opaqueShader;
-    gpu::ShaderPointer _transparentShader;
+
+    QHash<ProceduralProgramKey, gpu::ShaderPointer> _proceduralShaders;
+    QHash<ProceduralProgramKey, gpu::PipelinePointer> _proceduralPrograms;
 
     // Entity metadata
     glm::vec3 _entityDimensions;
@@ -105,8 +150,8 @@ protected:
 
 private:
     // This should only be called from the render thread, as it shares data with Procedural::prepare
-    void setupUniforms(bool transparent);
-    void setupChannels(bool shouldCreate, bool transparent);
+    void setupUniforms(ProceduralProgramKey key);
+    void setupChannels(bool shouldCreate, ProceduralProgramKey key);
 
     std::string replaceProceduralBlock(const std::string& fragmentSource);
 
@@ -114,7 +159,7 @@ private:
     mutable bool _hasStartedFade { false };
     mutable bool _isFading { false };
     bool _doesFade { true };
-    bool _prevTransparent { false };
+    ProceduralProgramKey _prevKey;
 };
 
 #endif

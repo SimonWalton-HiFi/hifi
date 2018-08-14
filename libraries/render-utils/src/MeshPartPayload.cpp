@@ -166,7 +166,10 @@ void MeshPartPayload::render(RenderArgs* args) {
     bindMesh(batch);
 
     if (!_drawMaterials.empty() && _drawMaterials.top().material->getProcedural().isReady()) {
-        _drawMaterials.top().material->editProcedural().prepare(batch, _drawTransform.getTranslation(), _drawTransform.getScale(), _drawTransform.getRotation());
+        glm::vec4 outColor = glm::vec4(_drawMaterials.top().material->getAlbedo(), _drawMaterials.top().material->getOpacity());
+        outColor = _drawMaterials.top().material->getProcedural().getColor(outColor);
+        _drawMaterials.top().material->editProcedural().prepare(batch, _drawTransform.getTranslation(), _drawTransform.getScale(), _drawTransform.getRotation(),
+                                                                ProceduralProgramKey(outColor.a < 1.0f));
     } else {
          // apply material properties
         if (args->_renderMode != render::Args::RenderMode::SHADOW_RENDER_MODE) {
@@ -438,7 +441,10 @@ void ModelMeshPartPayload::render(RenderArgs* args) {
     bindMesh(batch);
 
     if (!_drawMaterials.empty() && _drawMaterials.top().material->getProcedural().isReady()) {
-        _drawMaterials.top().material->editProcedural().prepare(batch, _drawTransform.getTranslation(), _drawTransform.getScale(), _drawTransform.getRotation());
+        glm::vec4 outColor = glm::vec4(_drawMaterials.top().material->getAlbedo(), _drawMaterials.top().material->getOpacity());
+        outColor = _drawMaterials.top().material->getProcedural().getColor(outColor);
+        _drawMaterials.top().material->editProcedural().prepare(batch, _transform.getTranslation(), _transform.getScale(), _transform.getRotation(),
+                                                                ProceduralProgramKey(outColor.a < 1.0f, _shapeKey.isSkinned(), _shapeKey.isDualQuatSkinned()));
     } else {
          // apply material properties
         if (args->_renderMode != render::Args::RenderMode::SHADOW_RENDER_MODE) {
