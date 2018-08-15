@@ -2589,6 +2589,23 @@ bool EntityTree::readFromMap(QVariantMap& map) {
             properties.setColorSpread({0, 0, 0});
         }
 
+        // Convert old procedurals so that they use proceduralData instead of userData
+        if (contentVersion < (int)EntityVersion::ProceduralData && (properties.getType() == EntityTypes::EntityType::Shape ||
+            properties.getType() == EntityTypes::EntityType::Box || properties.getType() == EntityTypes::EntityType::Sphere)) {
+            QJsonObject userData = QJsonDocument::fromJson(properties.getUserData().toUtf8()).object();
+            QJsonObject proceduralData;
+
+            static const QString PROCEDURAL_USER_DATA_KEY = "ProceduralEntity";
+            QJsonValue proceduralEntity = userData[PROCEDURAL_USER_DATA_KEY];
+            if (!proceduralEntity.isNull()) {
+                proceduralData = proceduralEntity.toObject();
+                userData.remove(PROCEDURAL_USER_DATA_KEY);
+            }
+
+            properties.setProceduralData(QJsonDocument(proceduralData).toJson());
+            properties.setUserData(QJsonDocument(userData).toJson());
+        }
+
         EntityItemPointer entity = addEntity(entityItemID, properties);
         if (!entity) {
             qCDebug(entities) << "adding Entity failed:" << entityItemID << properties.getType();

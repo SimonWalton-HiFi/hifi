@@ -18,12 +18,12 @@ class ProceduralMaterialResource : public Resource {
 public:
     ProceduralMaterialResource(const QUrl& url);
 
-    QString getType() const override { return "ProceduralMaterial"; }
+    QString getType() const override { return "ProceduralNetworkMaterial"; }
 
     virtual void downloadFinished(const QByteArray& data) override;
 
     typedef struct ParsedMaterials {
-        uint version{ 1 };
+        uint version { 1 };
         std::vector<std::string> names;
         std::unordered_map<std::string, graphics::ProceduralMaterialPointer> networkMaterials;
 

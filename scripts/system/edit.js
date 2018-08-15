@@ -2160,7 +2160,7 @@ var PropertiesTool = function (opts) {
             parentSelectedEntities();
         } else if (data.type === 'unparent') {
             unparentSelectedEntities();
-        } else if (data.type === 'saveUserData' || data.type === 'saveMaterialData') {
+        } else if (data.type === 'saveUserData' || data.type === 'saveMaterialData' || data.type === 'saveProceduralData') {
             //the event bridge and json parsing handle our avatar id string differently.
             var actualID = data.id.split('"')[1];
             Entities.editEntity(actualID, data.properties);

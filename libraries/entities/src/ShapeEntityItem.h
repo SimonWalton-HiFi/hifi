@@ -107,7 +107,8 @@ public:
     virtual void computeShapeInfo(ShapeInfo& info) override;
     virtual ShapeType getShapeType() const override;
 
-    virtual void setUserData(const QString& userData) override;
+    void setProceduralData(const QString& proceduralData);
+    QString getProceduralData() const { return _proceduralData; }
 
     graphics::ProceduralMaterialPointer getMaterial() { return _material; }
 
@@ -116,6 +117,7 @@ protected:
     float _alpha { 1.0f };
     rgbColor _color;
     entity::Shape _shape { entity::Shape::Sphere };
+    QString _proceduralData;
 
     //! This is SHAPE_TYPE_ELLIPSOID rather than SHAPE_TYPE_NONE to maintain
     //! prior functionality where new or unsupported shapes are treated as

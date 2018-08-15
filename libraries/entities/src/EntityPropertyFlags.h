@@ -290,6 +290,10 @@ enum EntityPropertyList {
     // other properties which will never overlap with each other. 
     PROP_EMITTING_PARTICLES = PROP_ANIMATION_PLAYING,
 
+    // Aliases/Piggyback properties for Shape Entities. These properties intentionally reuse the enum values for
+    // other properties which will never overlap with each other.
+    PROP_PROCEDURAL_DATA = PROP_MATERIAL_DATA,
+
     // WARNING!!! DO NOT ADD PROPS_xxx here unless you really really meant to.... Add them UP above
 };
 

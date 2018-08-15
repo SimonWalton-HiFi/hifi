@@ -137,6 +137,7 @@ ProceduralMaterialResource::ParsedMaterials ProceduralMaterialResource::parseJSO
  * @property {string} scatteringMap - URL of scattering texture image. Only used if <code>normalMap</code> or 
  *     <code>bumpMap</code> is specified.
  * @property {string} lightMap - URL of light map texture image. <em>Currently not used.</em>
+ * @property {ProceduralData} procedural - The definition of a procedural shader material.
  */
 // Note: See MaterialEntityItem.h for default values used in practice.
 std::pair<std::string, graphics::ProceduralMaterialPointer> ProceduralMaterialResource::parseJSONMaterial(const QJsonObject& materialJSON, const QUrl& baseUrl) {

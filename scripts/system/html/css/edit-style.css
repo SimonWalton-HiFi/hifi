@@ -448,7 +448,7 @@ input[type=checkbox]:checked + label:hover {
     border: 1.5pt solid black;
 }
 
-.shape-section, .light-section, .model-section, .web-section, .image-section, .hyperlink-section, .text-section, .zone-section, .material-section {
+.shape-section, .light-section, .model-section, .web-section, .image-section, .hyperlink-section, .text-section, .zone-section, .material-section, .procedural-section {
     display: table;
 }
 
@@ -570,6 +570,7 @@ hr {
 .behavior-group[collapsed="true"] ~ .behavior-group,
 .model-group[collapsed="true"] ~ .model-group,
 .material-group[collapsed="true"] ~ .material-group,
+.procedural-group[collapsed="true"] ~ .procedural-group,
 .light-group[collapsed="true"] ~ .light-group {
     display: none !important;
 }
@@ -1388,13 +1389,15 @@ input#reset-to-natural-dimensions {
 }
 
 #userdata-clear,
-#materialdata-clear {
+#materialdata-clear,
+#proceduraldata-clear {
     margin-bottom: 10px;
 }
 
 
 #static-userdata,
-#static-materialData {
+#static-materialData,
+#static-proceduralData {
     display: none;
     z-index: 99;
     position: absolute;
@@ -1406,7 +1409,8 @@ input#reset-to-natural-dimensions {
 }
 
 #userdata-saved,
-#materialData-saved {
+#materialData-saved,
+#proceduralData-saved {
     margin-top:5px;
     font-size:16px;
     display:none;
@@ -1463,6 +1467,12 @@ input#reset-to-natural-dimensions {
     order: 6;
 }
 
+#properties-list.ShapeMenu #procedural,
+#properties-list.BoxMenu #procedural,
+#properties-list.SphereMenu #procedural {
+    order: 7;
+}
+
 #properties-list.ShapeMenu #material,
 #properties-list.BoxMenu #material,
 #properties-list.SphereMenu #material,
@@ -1505,6 +1515,7 @@ input#reset-to-natural-dimensions {
 }
 
 /* items to hide    */
+#properties-list.ParticleEffectMenu #procedural,
 #properties-list.ParticleEffectMenu #material,
 #properties-list.ParticleEffectMenu #base-color-section,
 #properties-list.ParticleEffectMenu #hyperlink,
@@ -1541,6 +1552,7 @@ input#reset-to-natural-dimensions {
     order: 7;
 }
 /* sections to hide    */
+#properties-list.LightMenu #procedural,
 #properties-list.LightMenu #material,
 #properties-list.LightMenu #model,
 #properties-list.LightMenu #zone,
@@ -1579,6 +1591,7 @@ input#reset-to-natural-dimensions {
     order: 7;
 }
 /* sections to hide    */
+#properties-list.ModelMenu #procedural,
 #properties-list.ModelMenu #material,
 #properties-list.ModelMenu #light,
 #properties-list.ModelMenu #zone,
@@ -1617,6 +1630,7 @@ input#reset-to-natural-dimensions {
     order: 7;
 }
 /* sections to hide    */
+#properties-list.ZoneMenu #procedural,
 #properties-list.ZoneMenu #material,
 #properties-list.ZoneMenu #light,
 #properties-list.ZoneMenu #model,
@@ -1655,6 +1669,7 @@ input#reset-to-natural-dimensions {
     order: 7;
 }
 /* sections to hide    */
+#properties-list.ImageMenu #procedural,
 #properties-list.ImageMenu #material,
 #properties-list.ImageMenu #light,
 #properties-list.ImageMenu #model,
@@ -1693,6 +1708,7 @@ input#reset-to-natural-dimensions {
     order: 7;
 }
 /* sections to hide    */
+#properties-list.WebMenu #procedural,
 #properties-list.WebMenu #material,
 #properties-list.WebMenu #light,
 #properties-list.WebMenu #model,
@@ -1732,6 +1748,7 @@ input#reset-to-natural-dimensions {
     order: 7;
 }
 /* sections to hide    */
+#properties-list.TextMenu #procedural,
 #properties-list.TextMenu #material,
 #properties-list.TextMenu #light,
 #properties-list.TextMenu #model,
@@ -1764,6 +1781,7 @@ input#reset-to-natural-dimensions {
 }
 
 /* sections to hide    */
+#properties-list.MaterialMenu #procedural,
 #properties-list.MaterialMenu #physical,
 #properties-list.MaterialMenu #collision-info,
 #properties-list.MaterialMenu #model,

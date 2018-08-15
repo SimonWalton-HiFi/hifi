@@ -69,6 +69,7 @@ function enableProperties() {
     if (elLocked.checked === false) {
         removeStaticUserData();
         removeStaticMaterialData();
+        removeStaticProceduralData();
     }
 }
 
@@ -87,6 +88,9 @@ function disableProperties() {
         }
         if ($('#materialdata-editor').css('display') === "block") {
             showStaticMaterialData();
+        }
+        if ($('#proceduraldata-editor').css('display') === "block") {
+            showStaticProceduralData();
         }
     }
 }
@@ -399,11 +403,136 @@ function setMaterialDataFromEditor(noUpdate) {
     }
 }
 
+function setProceduralDataFromEditor(noUpdate) {
+    var json = null;
+    try {
+        json = proceduralEditor.get();
+    } catch (e) {
+        alert('Invalid JSON code - look for red X in your code ', +e);
+    }
+    if (json === null) {
+        return;
+    } else {
+        var text = proceduralEditor.getText();
+        if (noUpdate === true) {
+            EventBridge.emitWebEvent(
+                JSON.stringify({
+                    id: lastEntityID,
+                    type: "saveProceduralData",
+                    properties: {
+                        proceduralData: text
+                    }
+                })
+            );
+            return;
+        } else {
+            updateProperty('proceduralData', text);
+        }
+    }
+}
+
 function setTextareaScrolling(element) {
     var isScrolling = element.scrollHeight > element.offsetHeight;
     element.setAttribute("scrolling", isScrolling ? "true" : "false");
 }
 
+var proceduralEditor = null;
+
+function createJSONProceduralEditor() {
+    var container = document.getElementById("proceduraldata-editor");
+    var options = {
+        search: false,
+        mode: 'tree',
+        modes: ['code', 'tree'],
+        name: 'proceduralData',
+        onModeChange: function () {
+            $('.jsoneditor-poweredBy').remove();
+        },
+        onError: function (e) {
+            alert('JSON editor:' + e);
+        },
+        onChange: function () {
+            var currentJSONString = proceduralEditor.getText();
+
+            if (currentJSONString === '{"":""}') {
+                return;
+            }
+            $('#proceduraldata-save').attr('disabled', false);
+
+
+        }
+    };
+    proceduralEditor = new JSONEditor(container, options);
+}
+
+function hideNewJSONProceduralEditorButton() {
+    $('#proceduraldata-new-editor').hide();
+}
+
+function showSaveProceduralDataButton() {
+    $('#proceduraldata-save').show();
+}
+
+function hideSaveProceduralDataButton() {
+    $('#proceduraldata-save').hide();
+}
+
+function showNewJSONProceduralEditorButton() {
+    $('#proceduraldata-new-editor').show();
+}
+
+function showProceduralDataTextArea() {
+    $('#property-procedural-data').show();
+}
+
+function hideProceduralDataTextArea() {
+    $('#property-procedural-data').hide();
+}
+
+function showStaticProceduralData() {
+    if (proceduralEditor !== null) {
+        $('#static-proceduraldata').show();
+        $('#static-proceduraldata').css('height', $('#proceduraldata-editor').height());
+        $('#static-proceduraldata').text(proceduralEditor.getText());
+    }
+}
+
+function removeStaticProceduralData() {
+    $('#static-proceduraldata').hide();
+}
+
+function setProceduralEditorJSON(json) {
+    proceduralEditor.set(json);
+    if (proceduralEditor.hasOwnProperty('expandAll')) {
+        proceduralEditor.expandAll();
+    }
+}
+
+function getProceduralEditorJSON() {
+    return proceduralEditor.get();
+}
+
+function deleteJSONProceduralEditor() {
+    if (proceduralEditor !== null) {
+        proceduralEditor.destroy();
+        proceduralEditor = null;
+    }
+}
+
+var savedProceduralJSONTimer = null;
+
+function saveJSONProceduralData(noUpdate) {
+    setProceduralDataFromEditor(noUpdate);
+    $('#proceduraldata-saved').show();
+    $('#proceduraldata-save').attr('disabled', true);
+    if (savedProceduralJSONTimer !== null) {
+        clearTimeout(savedProceduralJSONTimer);
+    }
+    savedProceduralJSONTimer = setTimeout(function () {
+        $('#proceduraldata-saved').hide();
+
+    }, EDITOR_TIMEOUT_DURATION);
+}
 
 var materialEditor = null;
 
@@ -610,7 +739,8 @@ function bindAllNonJSONEditorElements() {
         // TODO FIXME: (JSHint) Functions declared within loops referencing 
         //             an outer scoped variable may lead to confusing semantics.
         field.on('focus', function(e) {
-            if (e.target.id === "userdata-new-editor" || e.target.id === "userdata-clear" || e.target.id === "materialdata-new-editor" || e.target.id === "materialdata-clear") {
+            if (e.target.id === "userdata-new-editor" || e.target.id === "userdata-clear" || e.target.id === "materialdata-new-editor" || e.target.id === "materialdata-clear" ||
+                e.target.id === "proceduraldata-new-editor" || e.target.id === "proceduraldata-clear") {
                 return;
             } else {
                 if ($('#userdata-editor').css('height') !== "0px") {
@@ -618,6 +748,9 @@ function bindAllNonJSONEditorElements() {
                 }
                 if ($('#materialdata-editor').css('height') !== "0px") {
                     saveJSONMaterialData(true);
+                }
+                if ($('#proceduraldata-editor').css('height') !== "0px") {
+                    saveJSONProceduralData(true);
                 }
             }
         });
@@ -878,6 +1011,11 @@ function loaded() {
         var elYTextureURL = document.getElementById("property-y-texture-url");
         var elZTextureURL = document.getElementById("property-z-texture-url");
 
+        var elProceduralData = document.getElementById("property-procedural-data");
+        var elClearProceduralData = document.getElementById("proceduraldata-clear");
+        var elSaveProceduralData = document.getElementById("proceduraldata-save");
+        var elNewJSONProceduralEditor = document.getElementById('proceduraldata-new-editor');
+
         if (window.EventBridge !== undefined) {
             var properties;
             EventBridge.scriptEventReceived.connect(function(data) {
@@ -914,6 +1052,10 @@ function loaded() {
                             if (materialEditor !== null) {
                                 saveJSONMaterialData(true);
                                 deleteJSONMaterialEditor();
+                            }
+                            if (proceduralEditor !== null) {
+                                saveJSONProceduralData(true);
+                                deleteJSONProceduralEditor();
                             }
                         }
                         
@@ -1011,7 +1153,13 @@ function loaded() {
                         // Shape Properties
                         elShape.value = "Cube";
                         setDropdownText(elShape);
-                        
+
+                        deleteJSONProceduralEditor();
+                        elProceduralData.value = "";
+                        showProceduralDataTextArea();
+                        showSaveProceduralDataButton();
+                        showNewJSONProceduralEditorButton();
+
                         // Light Properties
                         elLightSpotLight.checked = false;
                         elLightColor.style.backgroundColor = "rgb(" + 0 + "," + 0 + "," + 0 + ")";
@@ -1120,6 +1268,7 @@ function loaded() {
                     } else if (data.selections.length > 1) {
                         deleteJSONEditor();
                         deleteJSONMaterialEditor();
+                        deleteJSONProceduralEditor();
                         var selections = data.selections;
 
                         var ids = [];
@@ -1158,6 +1307,9 @@ function loaded() {
                             }
                             if (materialEditor !== null) {
                                 saveJSONMaterialData(true);
+                            }
+                            if (proceduralEditor !== null) {
+                                saveJSONProceduralData(true);
                             }
                         }
 
@@ -1337,6 +1489,28 @@ function loaded() {
                             showSaveMaterialDataButton();
                             hideMaterialDataTextArea();
                             hideNewJSONMaterialEditorButton();
+                        }
+
+                        var proceduralJson = null;
+                        try {
+                            proceduralJson = JSON.parse(properties.proceduralData);
+                        } catch (e) {
+                            // normal text
+                            deleteJSONProceduralEditor();
+                            elProceduralData.value = properties.proceduralData;
+                            showProceduralDataTextArea();
+                            showNewJSONProceduralEditorButton();
+                            hideSaveProceduralDataButton();
+                        }
+                        if (proceduralJson !== null) {
+                            if (proceduralEditor === null) {
+                                createJSONProceduralEditor();
+                            }
+
+                            setProceduralEditorJSON(proceduralJson);
+                            showSaveProceduralDataButton();
+                            hideProceduralDataTextArea();
+                            hideNewJSONProceduralEditorButton();
                         }
 
                         elHyperlinkHref.value = properties.href;
@@ -1550,6 +1724,7 @@ function loaded() {
                             enableProperties();
                             elSaveUserData.disabled = true;
                             elSaveMaterialData.disabled = true;
+                            elSaveProceduralData.disabled = true;
                         }
 
                         var activeElement = document.activeElement;
@@ -1724,6 +1899,31 @@ function loaded() {
             hideMaterialDataTextArea();
             hideNewJSONMaterialEditorButton();
             showSaveMaterialDataButton();
+        });
+
+        elClearProceduralData.addEventListener("click", function () {
+            deleteJSONProceduralEditor();
+            elProceduralData.value = "";
+            showProceduralDataTextArea();
+            showNewJSONProceduralEditorButton();
+            hideSaveProceduralDataButton();
+            updateProperty('proceduralData', elProceduralData.value);
+        });
+
+        elSaveProceduralData.addEventListener("click", function () {
+            saveJSONProceduralData(true);
+        });
+
+        elProceduralData.addEventListener('change', createEmitTextPropertyUpdateFunction('proceduralData'));
+
+        elNewJSONProceduralEditor.addEventListener('click', function () {
+            deleteJSONProceduralEditor();
+            createJSONProceduralEditor();
+            var data = {};
+            setProceduralEditorJSON(data);
+            hideProceduralDataTextArea();
+            hideNewJSONProceduralEditorButton();
+            showSaveProceduralDataButton();
         });
 
         var colorChangeFunction = createEmitColorPropertyUpdateFunction(

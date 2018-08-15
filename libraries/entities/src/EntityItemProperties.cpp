@@ -374,6 +374,7 @@ EntityPropertyFlags EntityItemProperties::getChangedProperties() const {
     CHECK_PROPERTY_CHANGE(PROP_SPIN_START, spinStart);
     CHECK_PROPERTY_CHANGE(PROP_SPIN_FINISH, spinFinish);
     CHECK_PROPERTY_CHANGE(PROP_PARTICLE_ROTATE_WITH_ENTITY, rotateWithEntity);
+    CHECK_PROPERTY_CHANGE(PROP_PROCEDURAL_DATA, proceduralData);
 
     // Certifiable Properties
     CHECK_PROPERTY_CHANGE(PROP_ITEM_NAME, itemName);
@@ -720,25 +721,25 @@ EntityPropertyFlags EntityItemProperties::getChangedProperties() const {
  * by setting the <code>clientOnly</code> parameter in {@link Entities.addEntity} to <code>true</code>.
  * Material entities render as non-scalable spheres if they don't have their parent set.
  * @typedef {object} Entities.EntityProperties-Material
- * @property {string} materialURL="" - URL to a {@link MaterialResource}. If you append <code>?name</code> to the URL, the 
+ * @property {string} materialURL="" - URL to a {@link MaterialResource}. If you append <code>?name</code> to the URL, the
  *     material with that name in the {@link MaterialResource} will be applied to the entity. <br />
- *     Alternatively, set the property value to <code>"materialData"</code> to use the <code>materialData</code> property  
+ *     Alternatively, set the property value to <code>"materialData"</code> to use the <code>materialData</code> property
  *     for the {@link MaterialResource} values.
- * @property {number} priority=0 - The priority for applying the material to its parent. Only the highest priority material is 
- *     applied, with materials of the same priority randomly assigned. Materials that come with the model have a priority of 
+ * @property {number} priority=0 - The priority for applying the material to its parent. Only the highest priority material is
+ *     applied, with materials of the same priority randomly assigned. Materials that come with the model have a priority of
  *     <code>0</code>.
- * @property {string|number} parentMaterialName="0" - Selects the submesh or submeshes within the parent to apply the material 
- *     to. If in the format <code>"mat::string"</code>, all submeshes with material name <code>"string"</code> are replaced. 
- *     Otherwise the property value is parsed as an unsigned integer, specifying the mesh index to modify. Invalid values are 
+ * @property {string|number} parentMaterialName="0" - Selects the submesh or submeshes within the parent to apply the material
+ *     to. If in the format <code>"mat::string"</code>, all submeshes with material name <code>"string"</code> are replaced.
+ *     Otherwise the property value is parsed as an unsigned integer, specifying the mesh index to modify. Invalid values are
  *     parsed to <code>0</code>.
- * @property {string} materialMappingMode="uv" - How the material is mapped to the entity. Either <code>"uv"</code> or 
+ * @property {string} materialMappingMode="uv" - How the material is mapped to the entity. Either <code>"uv"</code> or
  *     <code>"projected"</code>. <em>Currently, only <code>"uv"</code> is supported.
- * @property {Vec2} materialMappingPos=0,0 - Offset position in UV-space of the top left of the material, range 
+ * @property {Vec2} materialMappingPos=0,0 - Offset position in UV-space of the top left of the material, range
  *     <code>{ x: 0, y: 0 }</code> &ndash; <code>{ x: 1, y: 1 }</code>.
  * @property {Vec2} materialMappingScale=1,1 - How much to scale the material within the parent's UV-space.
  * @property {number} materialMappingRot=0 - How much to rotate the material within the parent's UV-space, in degrees.
- * @property {string} materialData="" - Used to store {@link MaterialResource} data as a JSON string. You can use 
- *     <code>JSON.parse()</code> to parse the string into a JavaScript object which you can manipulate the properties of, and 
+ * @property {string} materialData="" - Used to store {@link MaterialResource} data as a JSON string. You can use
+ *     <code>JSON.parse()</code> to parse the string into a JavaScript object which you can manipulate the properties of, and
  *     use <code>JSON.stringify()</code> to convert the object into a string to put in the property.
  * @example <caption>Color a sphere using a Material entity.</caption>
  * var entityID = Entities.addEntity({
@@ -757,7 +758,6 @@ EntityPropertyFlags EntityItemProperties::getChangedProperties() const {
  *     materialData: JSON.stringify({
  *         materialVersion: 1,
  *         materials: {
- *             // Can only set albedo on a Shape entity.
  *             // Value overrides entity's "color" property.
  *             albedo: [1.0, 1.0, 0]  // Yellow
  *         }
@@ -1050,6 +1050,9 @@ EntityPropertyFlags EntityItemProperties::getChangedProperties() const {
  * @property {Entities.Shape} shape="Sphere" - The shape of the entity.
  * @property {Vec3} dimensions=0.1,0.1,0.1 - The dimensions of the entity.
  * @property {Color} color=255,255,255 - The color of the entity.
+ * @property {string} proceduralData="" - Used to store {@link ProceduralData} as a JSON string. You can use
+ *     <code>JSON.parse()</code> to parse the string into a JavaScript object to manipulate its properties, and
+ *     use <code>JSON.stringify()</code> to convert the object into a string to put in the property.
  * @example <caption>Create a cylinder.</caption>
  * var shape = Entities.addEntity({
  *     type: "Shape",
@@ -1339,6 +1342,7 @@ QScriptValue EntityItemProperties::copyToScriptValue(QScriptEngine* engine, bool
 
     if (_type == EntityTypes::Box || _type == EntityTypes::Sphere || _type == EntityTypes::Shape) {
         COPY_PROPERTY_TO_QSCRIPTVALUE(PROP_SHAPE, shape);
+        COPY_PROPERTY_TO_QSCRIPTVALUE(PROP_PROCEDURAL_DATA, proceduralData);
     }
 
     // FIXME - it seems like ParticleEffect should also support this
@@ -1609,6 +1613,7 @@ void EntityItemProperties::copyFromScriptValue(const QScriptValue& object, bool 
     COPY_PROPERTY_FROM_QSCRIPTVALUE(spinStart, float, setSpinStart);
     COPY_PROPERTY_FROM_QSCRIPTVALUE(spinFinish, float, setSpinFinish);
     COPY_PROPERTY_FROM_QSCRIPTVALUE(rotateWithEntity, bool, setRotateWithEntity);
+    COPY_PROPERTY_FROM_QSCRIPTVALUE(proceduralData, QString, setProceduralData);
 
     // Certifiable Properties
     COPY_PROPERTY_FROM_QSCRIPTVALUE(itemName, QString, setItemName);
@@ -2000,6 +2005,8 @@ void EntityItemProperties::entityPropertyFlagsFromScriptValue(const QScriptValue
         ADD_PROPERTY_TO_MAP(PROP_SPIN_START, SpinStart, spinStart, float);
         ADD_PROPERTY_TO_MAP(PROP_SPIN_FINISH, SpinFinish, spinFinish, float);
         ADD_PROPERTY_TO_MAP(PROP_PARTICLE_ROTATE_WITH_ENTITY, RotateWithEntity, rotateWithEntity, float);
+
+        ADD_PROPERTY_TO_MAP(PROP_PROCEDURAL_DATA, ProceduralData, proceduralData, QString);
 
         // Certifiable Properties
         ADD_PROPERTY_TO_MAP(PROP_ITEM_NAME, ItemName, itemName, QString);
@@ -2397,6 +2404,7 @@ OctreeElement::AppendState EntityItemProperties::encodeEntityEditPacket(PacketTy
                 properties.getType() == EntityTypes::Box ||
                 properties.getType() == EntityTypes::Sphere) {
                 APPEND_ENTITY_PROPERTY(PROP_SHAPE, properties.getShape());
+                APPEND_ENTITY_PROPERTY(PROP_PROCEDURAL_DATA, properties.getProceduralData());
             }
 
             // Materials
@@ -2773,6 +2781,7 @@ bool EntityItemProperties::decodeEntityEditPacket(const unsigned char* data, int
         properties.getType() == EntityTypes::Box ||
         properties.getType() == EntityTypes::Sphere) {
         READ_ENTITY_PROPERTY_TO_PROPERTIES(PROP_SHAPE, QString, setShape);
+        READ_ENTITY_PROPERTY_TO_PROPERTIES(PROP_PROCEDURAL_DATA, QString, setProceduralData);
     }
 
     // Materials
@@ -3022,6 +3031,8 @@ void EntityItemProperties::markAllChanged() {
     _materialMappingScaleChanged = true;
     _materialMappingRotChanged = true;
     _materialDataChanged = true;
+
+    _proceduralDataChanged = true;
 
     // Certifiable Properties
     _itemNameChanged = true;
@@ -3402,6 +3413,9 @@ QList<QString> EntityItemProperties::listChangedProperties() {
     }
     if (isVisibleInSecondaryCameraChanged()) {
         out += "isVisibleInSecondaryCamera";
+    }
+    if (proceduralDataChanged()) {
+        out += "proceduralData";
     }
 
     // Certifiable Properties

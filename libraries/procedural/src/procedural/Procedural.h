@@ -26,6 +26,19 @@
 using UniformLambdas = std::list<std::function<void(gpu::Batch& batch)>>;
 const size_t MAX_PROCEDURAL_TEXTURE_CHANNELS{ 4 };
 
+/**jsdoc
+ * An object containing user-defined uniforms for communicating data to shaders.
+ * @typedef {object} ProceduralUniforms
+ */
+
+/**jsdoc
+ * The data used to define a Procedural shader material.
+ * @typedef {object} ProceduralData
+ * @property {number} version=1 - The version of the procedural shader.
+ * @property {string} shaderUrl - A link to a shader.  Currently, only GLSL shaders are supported.  The shader must implement a different method depending on the version.
+ * @property {string[]} channels=[] - An array of input texture URLs.  Currently, up to 4 are supported.
+ * @property {ProceduralUniforms} uniforms={} - A {@link ProceduralUniforms} object containing all the custom uniforms to be passed to the shader.
+ */
 struct ProceduralData {
     static QJsonValue getProceduralData(const QString& proceduralJson);
     static ProceduralData parse(const QString& userDataJson);

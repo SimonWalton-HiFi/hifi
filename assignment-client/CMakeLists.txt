@@ -13,8 +13,11 @@ setup_memory_debugger()
 link_hifi_libraries(
   audio avatars octree gpu graphics fbx entities
   networking animation recording shared script-engine embedded-webserver
-  controllers physics plugins midi image procedural
+  controllers physics plugins midi image
 )
+include_hifi_library_headers(ktx)
+include_hifi_library_headers(model-networking)
+include_hifi_library_headers(procedural)
 
 add_dependencies(${TARGET_NAME} oven)
 

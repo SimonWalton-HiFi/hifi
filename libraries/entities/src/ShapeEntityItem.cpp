@@ -122,6 +122,7 @@ EntityItemProperties ShapeEntityItem::getProperties(EntityPropertyFlags desiredP
     properties.setShape(entity::stringFromShape(getShape()));
     COPY_ENTITY_PROPERTY_TO_PROPERTIES(color, getXColor);
     COPY_ENTITY_PROPERTY_TO_PROPERTIES(alpha, getAlpha);
+    COPY_ENTITY_PROPERTY_TO_PROPERTIES(proceduralData, getProceduralData);
 
     return properties;
 }
@@ -161,6 +162,7 @@ bool ShapeEntityItem::setProperties(const EntityItemProperties& properties) {
     SET_ENTITY_PROPERTY_FROM_PROPERTIES(alpha, setAlpha);
     SET_ENTITY_PROPERTY_FROM_PROPERTIES(color, setColor);
     SET_ENTITY_PROPERTY_FROM_PROPERTIES(shape, setShape);
+    SET_ENTITY_PROPERTY_FROM_PROPERTIES(proceduralData, setProceduralData);
 
     if (somethingChanged) {
         bool wantDebug = false;
@@ -186,6 +188,7 @@ int ShapeEntityItem::readEntitySubclassDataFromBuffer(const unsigned char* data,
     READ_ENTITY_PROPERTY(PROP_SHAPE, QString, setShape);
     READ_ENTITY_PROPERTY(PROP_COLOR, rgbColor, setColor);
     READ_ENTITY_PROPERTY(PROP_ALPHA, float, setAlpha);
+    READ_ENTITY_PROPERTY(PROP_PROCEDURAL_DATA, QString, setProceduralData);
 
     return bytesRead;
 }
@@ -195,6 +198,7 @@ EntityPropertyFlags ShapeEntityItem::getEntityProperties(EncodeBitstreamParams& 
     requestedProperties += PROP_SHAPE;
     requestedProperties += PROP_COLOR;
     requestedProperties += PROP_ALPHA;
+    requestedProperties += PROP_PROCEDURAL_DATA;
     return requestedProperties;
 }
 
@@ -210,6 +214,7 @@ void ShapeEntityItem::appendSubclassData(OctreePacketData* packetData, EncodeBit
     APPEND_ENTITY_PROPERTY(PROP_SHAPE, entity::stringFromShape(getShape()));
     APPEND_ENTITY_PROPERTY(PROP_COLOR, getColor());
     APPEND_ENTITY_PROPERTY(PROP_ALPHA, getAlpha());
+    APPEND_ENTITY_PROPERTY(PROP_PROCEDURAL_DATA, getProceduralData());
 }
 
 void ShapeEntityItem::setColor(const rgbColor& value) {
@@ -240,10 +245,10 @@ void ShapeEntityItem::setAlpha(float alpha) {
     _material->setOpacity(alpha);
 }
 
-void ShapeEntityItem::setUserData(const QString& userData) {
-    if (getUserData() != userData) {
-        EntityItem::setUserData(userData);
-        _material->editProcedural().setProceduralData(ProceduralData::parse(userData));
+void ShapeEntityItem::setProceduralData(const QString& proceduralData) {
+    if (getProceduralData() != proceduralData) {
+        _material->editProcedural().setProceduralData(ProceduralData::parse(proceduralData));
+        _proceduralData = proceduralData;
     }
 }
 

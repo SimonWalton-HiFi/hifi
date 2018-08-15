@@ -29,7 +29,6 @@
 Q_LOGGING_CATEGORY(proceduralLog, "hifi.gpu.procedural")
 
 // Userdata parsing constants
-static const QString PROCEDURAL_USER_DATA_KEY = "ProceduralEntity";
 static const QString URL_KEY = "shaderUrl";
 static const QString VERSION_KEY = "version";
 static const QString UNIFORMS_KEY = "uniforms";
@@ -58,7 +57,7 @@ QJsonValue ProceduralData::getProceduralData(const QString& proceduralJson) {
         return QJsonValue();
     }
 
-    return doc.object()[PROCEDURAL_USER_DATA_KEY];
+    return doc.object();
 }
 
 ProceduralData ProceduralData::parse(const QString& userDataJson) {
