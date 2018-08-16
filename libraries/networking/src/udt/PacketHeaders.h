@@ -289,7 +289,8 @@ enum class AvatarMixerPacketVersion : PacketVersion {
     AvatarJointDefaultPoseFlags,
     FBXReaderNodeReparenting,
     FixMannequinDefaultAvatarFeet,
-    ProceduralFaceMovementFlagsAndBlendshapes
+    ProceduralFaceMovementFlagsAndBlendshapes,
+    FarGrabJoints
 };
 
 enum class DomainConnectRequestVersion : PacketVersion {
