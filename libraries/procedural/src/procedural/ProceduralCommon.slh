@@ -8,15 +8,24 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
-<@include gpu/Transform.slh@>
 <@include gpu/Noise.slh@>
 <@include procedural/ShaderConstants.h@>
- 
-<$declareStandardCameraTransform()$>
-
-#define PROCEDURAL 1
 
 //PROCEDURAL_VERSION
+
+#if defined(PROCEDURAL_V1) || defined(PROCEDURAL_V2) || defined(PROCEDURAL_V3)
+
+struct ProceduralVertexData {
+    vec4 position;
+    vec4 nonSkinnedPosition;
+    vec4 color;
+    vec3 normal;
+    vec3 nonSkinnedNormal;
+    vec3 tangent;
+    vec2 texCoord0;
+};
+
+#endif
 
 #ifdef PROCEDURAL_V1
 
@@ -54,7 +63,7 @@ layout(binding=PROCEDURAL_TEXTURE_CHANNEL3) uniform sampler2D iChannel3;
 
 #ifdef PROCEDURAL_V3
 
-struct ProceduralData {
+struct ProceduralFragmentData {
     vec3 position;
     vec3 normal;
     vec3 diffuse;

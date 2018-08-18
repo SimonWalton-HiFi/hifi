@@ -30,19 +30,45 @@ layout(location=RENDER_UTILS_ATTR_TEXCOORD01) out vec4 _texCoord01;
 layout(location=RENDER_UTILS_ATTR_POSITION_MS) out vec4 _positionMS;
 layout(location=RENDER_UTILS_ATTR_POSITION_ES) out vec4 _positionES;
 
-void main(void) {
-    _color = color_sRGBAToLinear(inColor);
-    _texCoord01.xy = inTexCoord0.st;
-    _positionMS = inPosition;
-    _normalMS = inNormal.xyz;
+<@include procedural/ProceduralCommon.slh@>
 
-    vec4 position = vec4(0.0, 0.0, 0.0, 0.0);
-    vec3 interpolatedNormal = vec3(0.0, 0.0, 0.0);
-    skinPositionNormal(inSkinClusterIndex, inSkinClusterWeight, inPosition, inNormal.xyz, position, interpolatedNormal);
+#line 1001
+//PROCEDURAL_BLOCK
+
+#line 2030
+void main(void) {
+    vec4 position;
+    vec3 normal;
+    skinPositionNormal(inSkinClusterIndex, inSkinClusterWeight, inPosition, inNormal.xyz, position, normal);
+    vec4 color = color_sRGBAToLinear(inColor);
+    vec3 tangent = inTangent.xyz;
+    vec2 texCoord0 = inTexCoord0.st;
+
+#if defined(PROCEDURAL_V1) || defined(PROCEDURAL_V2) || defined(PROCEDURAL_V3)
+    ProceduralVertexData proceduralData = {
+        position,
+        inPosition,
+        color,
+        normalize(normal),
+        normalize(inNormal.xyz),
+        tangent,
+        texCoord0
+    };
+    getProceduralVertex(proceduralData);
+    position = proceduralData.position;
+    color = proceduralData.color;
+    normal = proceduralData.normal;
+    texCoord0 = proceduralData.texCoord0;
+#endif
+
+    _positionMS = position;
+    _color = color;
+    _normalMS = normal;
+    _texCoord01.xy = texCoord0;
 
     // standard transform
     TransformCamera cam = getTransformCamera();
     TransformObject obj = getTransformObject();
     <$transformModelToEyeAndClipPos(cam, obj, position, _positionES, gl_Position)$>
-    <$transformModelToWorldDir(cam, obj, interpolatedNormal.xyz, _normalWS)$>
+    <$transformModelToWorldDir(cam, obj, normal, _normalWS)$>
 }

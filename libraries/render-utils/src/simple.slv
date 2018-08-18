@@ -27,15 +27,44 @@ layout(location=RENDER_UTILS_ATTR_TEXCOORD01) out vec4 _texCoord01;
 layout(location=RENDER_UTILS_ATTR_POSITION_MS) out vec4 _positionMS;
 layout(location=RENDER_UTILS_ATTR_POSITION_ES) out vec4 _positionES;
 
+<@include procedural/ProceduralCommon.slh@>
+
+#line 1001
+//PROCEDURAL_BLOCK
+
+#line 2030
 void main(void) {
-    _color = color_sRGBAToLinear(inColor);
-    _texCoord01.xy = inTexCoord0.st;
-    _positionMS = inPosition;
-    _normalMS = inNormal.xyz;
+    vec4 position = inPosition;
+    vec3 normal = inNormal.xyz;
+    vec4 color = color_sRGBAToLinear(inColor);
+    vec3 tangent = inTangent.xyz;
+    vec2 texCoord0 = inTexCoord0.st;
+
+#if defined(PROCEDURAL_V1) || defined(PROCEDURAL_V2) || defined(PROCEDURAL_V3)
+    ProceduralVertexData proceduralData = {
+        position,
+        position,
+        color,
+        normal,
+        normal,
+        tangent,
+        texCoord0
+    };
+    getProceduralVertex(proceduralData);
+    position = proceduralData.position;
+    color = proceduralData.color;
+    normal = proceduralData.normal;
+    texCoord0 = proceduralData.texCoord0;
+#endif
+
+    _positionMS = position;
+    _color = color;
+    _normalMS = normal;
+    _texCoord01.xy = texCoord0;
 
     // standard transform
     TransformCamera cam = getTransformCamera();
     TransformObject obj = getTransformObject();
-    <$transformModelToEyeAndClipPos(cam, obj, inPosition, _positionES, gl_Position)$>
-    <$transformModelToWorldDir(cam, obj, inNormal.xyz, _normalWS)$>
+    <$transformModelToEyeAndClipPos(cam, obj, position, _positionES, gl_Position)$>
+    <$transformModelToWorldDir(cam, obj, normal, _normalWS)$>
 }

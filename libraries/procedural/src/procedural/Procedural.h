@@ -35,7 +35,9 @@ const size_t MAX_PROCEDURAL_TEXTURE_CHANNELS{ 4 };
  * The data used to define a Procedural shader material.
  * @typedef {object} ProceduralData
  * @property {number} version=1 - The version of the procedural shader.
- * @property {string} shaderUrl - A link to a shader.  Currently, only GLSL shaders are supported.  The shader must implement a different method depending on the version.
+ * @property {string} vertexShaderUrl - A link to a vertex shader.  Currently, only GLSL shaders are supported.  Optional.
+ * @property {string} fragmentShaderUrl - A link to a fragment shader.  Currently, only GLSL shaders are supported.  The shader must implement a different method depending on the version.
+ *     <code>shaderUrl</code> is an alias.
  * @property {string[]} channels=[] - An array of input texture URLs.  Currently, up to 4 are supported.
  * @property {ProceduralUniforms} uniforms={} - A {@link ProceduralUniforms} object containing all the custom uniforms to be passed to the shader.
  */
@@ -47,7 +49,8 @@ struct ProceduralData {
 
     // Rendering object descriptions, from userData
     uint8_t version { 0 };
-    QUrl shaderUrl;
+    QUrl fragmentShaderUrl;
+    QUrl vertexShaderUrl;
     QJsonObject uniforms;
     QJsonArray channels;
 };
@@ -140,10 +143,14 @@ protected:
     int32_t _frameCount { 0 };
 
     // Rendering object descriptions, from userData
-    QString _shaderSource;
-    QString _shaderPath;
-    quint64 _shaderModified { 0 };
-    NetworkShaderPointer _networkShader;
+    QString _vertexShaderSource;
+    QString _vertexShaderPath;
+    quint64 _vertexShaderModified{ 0 };
+    NetworkShaderPointer _networkVertexShader;
+    QString _fragmentShaderSource;
+    QString _fragmentShaderPath;
+    quint64 _fragmentShaderModified { 0 };
+    NetworkShaderPointer _networkFragmentShader;
     bool _dirty { false };
     bool _shaderDirty { true };
     bool _uniformsDirty { true };
@@ -153,8 +160,8 @@ protected:
     UniformLambdas _uniforms;
     NetworkTexturePointer _channels[MAX_PROCEDURAL_TEXTURE_CHANNELS];
 
-    QHash<ProceduralProgramKey, gpu::ShaderPointer> _proceduralShaders;
-    QHash<ProceduralProgramKey, gpu::PipelinePointer> _proceduralPrograms;
+    QHash<ProceduralProgramKey, gpu::ShaderPointer> _proceduralPrograms;
+    QHash<ProceduralProgramKey, gpu::PipelinePointer> _proceduralPipelines;
 
     // Entity metadata
     glm::vec3 _entityDimensions;
@@ -166,7 +173,7 @@ private:
     void setupUniforms(ProceduralProgramKey key);
     void setupChannels(bool shouldCreate, ProceduralProgramKey key);
 
-    std::string replaceProceduralBlock(const std::string& fragmentSource);
+    std::string replaceProceduralBlock(const std::string& shaderString, const QString& shaderSource);
 
     mutable quint64 _fadeStartTime { 0 };
     mutable bool _hasStartedFade { false };

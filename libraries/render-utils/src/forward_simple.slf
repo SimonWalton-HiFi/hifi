@@ -16,6 +16,8 @@
 <@include ForwardGlobalLight.slh@>
 <$declareEvalSkyboxGlobalColor()$>
 
+<@include gpu/Transform.slh@>
+<$declareStandardCameraTransform()$>
 <@include render-utils/ShaderConstants.h@>
 
 // the interpolated normal
@@ -49,8 +51,6 @@ void main(void) {
     float shininess = DEFAULT_SHININESS;
     float emissiveAmount = 0.0;
     TransformCamera cam = getTransformCamera();
-
-#ifdef PROCEDURAL
 
 #if defined(PROCEDURAL_V1)
     diffuse = getProceduralColor().rgb;
@@ -94,8 +94,6 @@ void main(void) {
     float far = gl_DepthRange.far;
     float near = gl_DepthRange.near;
     gl_FragDepth = 0.5 * ((far - near) * posClip.z / posClip.w + near + far);
-#endif
-
 #endif
 
 #ifndef PROCEDURAL_V3

@@ -30,6 +30,8 @@ Q_LOGGING_CATEGORY(proceduralLog, "hifi.gpu.procedural")
 
 // Userdata parsing constants
 static const QString URL_KEY = "shaderUrl";
+static const QString VERTEX_URL_KEY = "vertexShaderUrl";
+static const QString FRAGMENT_URL_KEY = "fragmentShaderUrl";
 static const QString VERSION_KEY = "version";
 static const QString UNIFORMS_KEY = "uniforms";
 static const QString CHANNELS_KEY = "channels";
@@ -41,7 +43,8 @@ static const std::string PROCEDURAL_VERSION = "//PROCEDURAL_VERSION";
 bool operator==(const ProceduralData& a, const ProceduralData& b) {
     return (
         (a.version == b.version) &&
-        (a.shaderUrl == b.shaderUrl) &&
+        (a.fragmentShaderUrl == b.fragmentShaderUrl) &&
+        (a.vertexShaderUrl == b.vertexShaderUrl) &&
         (a.uniforms == b.uniforms) &&
         (a.channels == b.channels));
 }
@@ -85,24 +88,24 @@ void ProceduralData::parse(const QJsonObject& proceduralData) {
         }
     }
 
-    auto rawShaderUrl = proceduralData[URL_KEY].toString();
-    shaderUrl = DependencyManager::get<ResourceManager>()->normalizeURL(rawShaderUrl);
+    {  // Fragment shader URL (either fragmentShaderUrl or shaderUrl)
+        auto rawShaderUrl = proceduralData[FRAGMENT_URL_KEY].toString();
+        fragmentShaderUrl = DependencyManager::get<ResourceManager>()->normalizeURL(rawShaderUrl);
 
-    // Empty shader URL isn't valid
-    if (shaderUrl.isEmpty()) {
-        return;
+        if (fragmentShaderUrl.isEmpty()) {
+            rawShaderUrl = proceduralData[URL_KEY].toString();
+            fragmentShaderUrl = DependencyManager::get<ResourceManager>()->normalizeURL(rawShaderUrl);
+        }
+    }
+
+    {  // Vertex shader URL
+        auto rawShaderUrl = proceduralData[VERTEX_URL_KEY].toString();
+        vertexShaderUrl = DependencyManager::get<ResourceManager>()->normalizeURL(rawShaderUrl);
     }
 
     uniforms = proceduralData[UNIFORMS_KEY].toObject();
     channels = proceduralData[CHANNELS_KEY].toArray();
 }
-
-// Example
-//{
-//    "ProceduralEntity": {
-//        "shaderUrl": "file:///C:/Users/bdavis/Git/hifi/examples/shaders/test.fs",
-//    }
-//}
 
 Procedural::Procedural() {
     _opaqueState->setCullMode(gpu::State::CULL_BACK);
@@ -156,32 +159,53 @@ void Procedural::setProceduralData(const ProceduralData& proceduralData) {
         _channelsDirty = true;
     }
 
-    if (proceduralData.shaderUrl != _data.shaderUrl) {
-        _data.shaderUrl = proceduralData.shaderUrl;
+    if (proceduralData.fragmentShaderUrl != _data.fragmentShaderUrl) {
+        _data.fragmentShaderUrl = proceduralData.fragmentShaderUrl;
         _shaderDirty = true;
-        const auto& shaderUrl = _data.shaderUrl;
-        _networkShader.reset();
-        _shaderPath.clear();
-
-        if (shaderUrl.isEmpty()) {
-            return;
-        }
+        const auto& shaderUrl = _data.fragmentShaderUrl;
+        _networkFragmentShader.reset();
+        _fragmentShaderPath.clear();
 
         if (!shaderUrl.isValid()) {
-            qCWarning(proceduralLog) << "Invalid shader URL: " << shaderUrl;
+            qCWarning(proceduralLog) << "Invalid fragment shader URL: " << shaderUrl;
             return;
         }
 
         if (shaderUrl.isLocalFile()) {
             if (!QFileInfo(shaderUrl.toLocalFile()).exists()) {
-                qCWarning(proceduralLog) << "Invalid shader URL, missing local file: " << shaderUrl;
+                qCWarning(proceduralLog) << "Invalid fragment shader URL, missing local file: " << shaderUrl;
                 return;
             }
-            _shaderPath = shaderUrl.toLocalFile();
+            _fragmentShaderPath = shaderUrl.toLocalFile();
         } else if (shaderUrl.scheme() == URL_SCHEME_QRC) {
-            _shaderPath = ":" + shaderUrl.path();
+            _fragmentShaderPath = ":" + shaderUrl.path();
         } else {
-            _networkShader = ShaderCache::instance().getShader(shaderUrl);
+            _networkFragmentShader = ShaderCache::instance().getShader(shaderUrl);
+        }
+    }
+
+    if (proceduralData.vertexShaderUrl != _data.vertexShaderUrl) {
+        _data.vertexShaderUrl = proceduralData.vertexShaderUrl;
+        _shaderDirty = true;
+        const auto& shaderUrl = _data.vertexShaderUrl;
+        _networkVertexShader.reset();
+        _vertexShaderPath.clear();
+
+        if (!shaderUrl.isValid()) {
+            qCWarning(proceduralLog) << "Invalid vertex shader URL: " << shaderUrl;
+            return;
+        }
+
+        if (shaderUrl.isLocalFile()) {
+            if (!QFileInfo(shaderUrl.toLocalFile()).exists()) {
+                qCWarning(proceduralLog) << "Invalid vertex shader URL, missing local file: " << shaderUrl;
+                return;
+            }
+            _vertexShaderPath = shaderUrl.toLocalFile();
+        } else if (shaderUrl.scheme() == URL_SCHEME_QRC) {
+            _vertexShaderPath = ":" + shaderUrl.path();
+        } else {
+            _networkVertexShader = ShaderCache::instance().getShader(shaderUrl);
         }
     }
 
@@ -201,8 +225,19 @@ bool Procedural::isReady() const {
         _fadeStartTime = usecTimestampNow();
     }
 
-    // Do we have a network or local shader, and if so, is it loaded?
-    if (_shaderPath.isEmpty() && (!_networkShader || !_networkShader->isLoaded())) {
+    bool hasFragmentShader = !_fragmentShaderPath.isEmpty() || _networkFragmentShader;
+    bool fragmentShaderLoaded = !_fragmentShaderPath.isEmpty() || (_networkFragmentShader && _networkFragmentShader->isLoaded());
+    bool hasVertexShader = !_vertexShaderPath.isEmpty() || _networkVertexShader;
+    bool vertexShaderLoaded = !_vertexShaderPath.isEmpty() || (_networkVertexShader && _networkVertexShader->isLoaded());
+
+    // We need to have at least one shader, and whichever ones we have need to be loaded
+    if (hasFragmentShader && hasVertexShader && (!fragmentShaderLoaded || !vertexShaderLoaded)) {
+        return false;
+    } else if (hasFragmentShader && !fragmentShaderLoaded) {
+        return false;
+    } else if (hasVertexShader && !vertexShaderLoaded) {
+        return false;
+    } else if (!hasFragmentShader && !hasVertexShader) {
         return false;
     }
 
@@ -221,8 +256,8 @@ bool Procedural::isReady() const {
     return true;
 }
 
-std::string Procedural::replaceProceduralBlock(const std::string& fragmentSource) {
-    std::string result = fragmentSource;
+std::string Procedural::replaceProceduralBlock(const std::string& shaderString, const QString& shaderSource) {
+    std::string result = shaderString;
     auto replaceIndex = result.find(PROCEDURAL_VERSION);
     if (replaceIndex != std::string::npos) {
         if (_data.version == 1) {
@@ -235,7 +270,7 @@ std::string Procedural::replaceProceduralBlock(const std::string& fragmentSource
     }
     replaceIndex = result.find(PROCEDURAL_BLOCK);
     if (replaceIndex != std::string::npos) {
-        result.replace(replaceIndex, PROCEDURAL_BLOCK.size(), _shaderSource.toLocal8Bit().data());
+        result.replace(replaceIndex, PROCEDURAL_BLOCK.size(), shaderSource.toLocal8Bit().data());
     }
     return result;
 }
@@ -248,58 +283,94 @@ void Procedural::prepare(gpu::Batch& batch,
     _entityDimensions = size;
     _entityPosition = position;
     _entityOrientation = glm::mat3_cast(orientation);
-    if (!_shaderPath.isEmpty()) {
-        auto lastModified = (quint64)QFileInfo(_shaderPath).lastModified().toMSecsSinceEpoch();
-        if (lastModified > _shaderModified) {
-            QFile file(_shaderPath);
+    if (!_fragmentShaderPath.isEmpty()) {
+        auto lastModified = (quint64)QFileInfo(_fragmentShaderPath).lastModified().toMSecsSinceEpoch();
+        if (lastModified > _fragmentShaderModified) {
+            QFile file(_fragmentShaderPath);
             file.open(QIODevice::ReadOnly);
-            _shaderSource = QTextStream(&file).readAll();
+            _fragmentShaderSource = QTextStream(&file).readAll();
             _shaderDirty = true;
-            _shaderModified = lastModified;
+            _fragmentShaderModified = lastModified;
         }
-    } else if (_networkShader && _networkShader->isLoaded()) {
-        _shaderSource = _networkShader->_source;
+    } else if (_networkFragmentShader && _networkFragmentShader->isLoaded()) {
+        _fragmentShaderSource = _networkFragmentShader->_source;
     }
 
-    auto pipeline = _proceduralPrograms.find(key);
+    if (!_vertexShaderPath.isEmpty()) {
+        auto lastModified = (quint64)QFileInfo(_vertexShaderPath).lastModified().toMSecsSinceEpoch();
+        if (lastModified > _vertexShaderModified) {
+            QFile file(_vertexShaderPath);
+            file.open(QIODevice::ReadOnly);
+            _vertexShaderSource = QTextStream(&file).readAll();
+            _shaderDirty = true;
+            _vertexShaderModified = lastModified;
+        }
+    } else if (_networkVertexShader && _networkVertexShader->isLoaded()) {
+        _vertexShaderSource = _networkVertexShader->_source;
+    }
+
+    auto pipeline = _proceduralPipelines.find(key);
     bool recompiledShader = false;
-    if (pipeline == _proceduralPrograms.end() || _shaderDirty) {
-        gpu::ShaderPointer vertexShader;
+    if (pipeline == _proceduralPipelines.end() || _shaderDirty) {
+        gpu::Shader::Source vertexSource;
         if (key.isSkinnedDQ()) {
-            vertexShader = gpu::Shader::createVertex(_vertexSourceSkinDQ);
+            vertexSource = _vertexSourceSkinDQ;
         } else if (key.isSkinned()) {
-            vertexShader = gpu::Shader::createVertex(_vertexSourceSkin);
+            vertexSource = _vertexSourceSkin;
         } else {
-            vertexShader = gpu::Shader::createVertex(_vertexSource);
+            vertexSource = _vertexSource;
         }
 
-        // Build the fragment shader
-        std::string fragmentShaderSource = replaceProceduralBlock(key.isTransparent() ? _transparentFragmentSource.getCode() : _opaqueFragmentSource.getCode());
-        auto reflection = key.isTransparent() ? _transparentFragmentSource.getReflection() : _opaqueFragmentSource.getReflection();
-        auto& uniforms = reflection[gpu::Shader::BindingType::UNIFORM];
+        gpu::Shader::Source fragmentSource = key.isTransparent() ? _transparentFragmentSource : _opaqueFragmentSource;
 
+        std::string vertexShaderSource = _vertexShaderSource.isEmpty() ? vertexSource.getCode() : replaceProceduralBlock(vertexSource.getCode(), _vertexShaderSource);
+        std::string fragmentShaderSource = _fragmentShaderSource.isEmpty() ? fragmentSource.getCode() : replaceProceduralBlock(fragmentSource.getCode(), _fragmentShaderSource);
+        gpu::ShaderPointer vertexShader;
+        gpu::ShaderPointer fragmentShader;
         // Set any userdata specified uniforms
-        int customSlot = procedural::slot::uniform::Custom;
-        for (const auto& key : _data.uniforms.keys()) {
-            std::string uniformName = key.toLocal8Bit().data();
-            uniforms[uniformName] = customSlot;
-            ++customSlot;
+        { // Vertex shader reflection
+            auto reflection = vertexSource.getReflection();
+            auto& uniforms = reflection[gpu::Shader::BindingType::UNIFORM];
+
+            // If a uniform is used by both the vertex and fragment shaders, it should have the same location
+            int customSlot = procedural::slot::uniform::Custom;
+            for (const auto& key : _data.uniforms.keys()) {
+                std::string uniformName = key.toLocal8Bit().data();
+                uniforms[uniformName] = customSlot;
+                ++customSlot;
+            }
+
+            vertexShader = gpu::Shader::createVertex({ vertexShaderSource, reflection });
+        }
+        { // Fragment shader reflection
+            auto reflection = fragmentSource.getReflection();
+            auto& uniforms = reflection[gpu::Shader::BindingType::UNIFORM];
+
+            // If a uniform is used by both the vertex and fragment shaders, it should have the same location
+            int customSlot = procedural::slot::uniform::Custom;
+            for (const auto& key : _data.uniforms.keys()) {
+                std::string uniformName = key.toLocal8Bit().data();
+                uniforms[uniformName] = customSlot;
+                ++customSlot;
+            }
+
+            fragmentShader = gpu::Shader::createPixel({ fragmentShaderSource, reflection });
         }
 
         // Leave this here for debugging
-        // qCDebug(proceduralLog) << "FragmentShader:\n" << fragmentShaderSource.c_str();
+        //qCDebug(proceduralLog) << "VertexShader:\n" << vertexShaderSource.c_str();
+        //qCDebug(proceduralLog) << "FragmentShader:\n" << fragmentShaderSource.c_str();
 
-        gpu::ShaderPointer fragmentShader = gpu::Shader::createPixel({ fragmentShaderSource, reflection });
-        gpu::ShaderPointer shader = gpu::Shader::createProgram(vertexShader, fragmentShader);
+        gpu::ShaderPointer program = gpu::Shader::createProgram(vertexShader, fragmentShader);
 
-        _proceduralShaders[key] = shader;
-        _proceduralPrograms[key] = gpu::Pipeline::create(shader, _opaqueState);
+        _proceduralPrograms[key] = program;
+        _proceduralPipelines[key] = gpu::Pipeline::create(program, key.isTransparent() ? _transparentState : _opaqueState);
         _start = usecTimestampNow();
         _frameCount = 0;
         recompiledShader = true;
     }
 
-    batch.setPipeline(recompiledShader ? _proceduralPrograms[key] : *pipeline);
+    batch.setPipeline(recompiledShader ? _proceduralPipelines[key] : *pipeline);
 
     if (_shaderDirty || _uniformsDirty || _prevKey != key) {
         setupUniforms(key);
@@ -337,8 +408,8 @@ void Procedural::prepare(gpu::Batch& batch,
 
 void Procedural::setupUniforms(ProceduralProgramKey key) {
     _uniforms.clear();
-    auto& shader = _proceduralShaders[key];
-    const auto& uniformSlots = shader->getUniforms();
+    auto& program = _proceduralPrograms[key];
+    const auto& uniformSlots = program->getUniforms();
     auto customUniformCount = _data.uniforms.keys().size();
 
     // Set any userdata specified uniforms
@@ -442,8 +513,8 @@ void Procedural::setupUniforms(ProceduralProgramKey key) {
 }
 
 void Procedural::setupChannels(bool shouldCreate, ProceduralProgramKey key) {
-    auto& shader = _proceduralShaders[key];
-    const auto& uniformSlots = shader->getUniforms();
+    auto& program = _proceduralPrograms[key];
+    const auto& uniformSlots = program->getUniforms();
 
     if (uniformSlots.isValid(procedural::slot::uniform::ChannelResolution)) {
         if (!shouldCreate) {
