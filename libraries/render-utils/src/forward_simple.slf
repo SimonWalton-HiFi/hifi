@@ -61,7 +61,7 @@ void main(void) {
     emissiveAmount = getProceduralColors(diffuse, specular, shininess);
 #elif defined(PROCEDURAL_V3)
     vec4 position = cam._viewInverse * _positionES;
-    ProceduralData proceduralData = {
+    ProceduralFragmentData proceduralData = {
         position.xyz,
         normal,
         vec3(0.0),

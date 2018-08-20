@@ -102,14 +102,12 @@ inline bool operator!=(const ProceduralProgramKey& a, const ProceduralProgramKey
     return a.getRaw() != b.getRaw();
 }
 
-// WARNING with threaded rendering it is the RESPONSIBILITY OF THE CALLER to ensure that 
-// calls to `setProceduralData` happen on the main thread and that calls to `ready` and `prepare` 
-// are treated atomically, and that they cannot happen concurrently with calls to `setProceduralData`
 // FIXME better encapsulation
 // FIXME better mechanism for extending to things rendered using shaders other than simple.slv
 struct Procedural {
 public:
     Procedural();
+    Procedural(const Procedural& other);
     void setProceduralData(const ProceduralData& proceduralData);
 
     bool isReady() const;
@@ -151,7 +149,6 @@ protected:
     QString _fragmentShaderPath;
     quint64 _fragmentShaderModified { 0 };
     NetworkShaderPointer _networkFragmentShader;
-    bool _dirty { false };
     bool _shaderDirty { true };
     bool _uniformsDirty { true };
     bool _channelsDirty { true };
@@ -180,6 +177,7 @@ private:
     mutable bool _isFading { false };
     bool _doesFade { true };
     ProceduralProgramKey _prevKey;
+    mutable std::mutex _lock;
 };
 
 #endif

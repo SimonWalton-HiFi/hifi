@@ -115,7 +115,7 @@ Procedural::Procedural() {
                                    gpu::State::ONE);
     PrepareStencil::testMaskDrawShape(*_opaqueState);
 
-    _transparentState->setCullMode(gpu::State::CULL_NONE);
+    _transparentState->setCullMode(gpu::State::CULL_BACK);
     _transparentState->setDepthTest(true, true, gpu::LESS_EQUAL);
     _transparentState->setBlendFunction(true, gpu::State::SRC_ALPHA, gpu::State::BLEND_OP_ADD,
                                         gpu::State::INV_SRC_ALPHA, gpu::State::FACTOR_ALPHA,
@@ -123,12 +123,30 @@ Procedural::Procedural() {
     PrepareStencil::testMask(*_transparentState);
 }
 
+Procedural::Procedural(const Procedural& other) {
+    _vertexSource = other._vertexSource;
+    _vertexSourceSkin = other._vertexSourceSkin;
+    _vertexSourceSkinDQ = other._vertexSourceSkinDQ;
+    _opaqueFragmentSource = other._opaqueFragmentSource;
+    _opaqueState = other._opaqueState;
+    _transparentState = other._transparentState;
+
+    _data = other._data;
+
+    _enabled = other._enabled;
+
+    _vertexShaderPath = other._vertexShaderPath;
+    _networkVertexShader = other._networkVertexShader;
+    _fragmentShaderPath = other._fragmentShaderPath;
+    _networkFragmentShader = other._networkFragmentShader;
+}
+
 void Procedural::setProceduralData(const ProceduralData& proceduralData) {
+    std::lock_guard<std::mutex> lock(_lock);
     if (proceduralData == _data) {
         return;
     }
 
-    _dirty = true;
     _enabled = false;
 
     if (proceduralData.version != _data.version ) {
@@ -137,6 +155,10 @@ void Procedural::setProceduralData(const ProceduralData& proceduralData) {
     }
 
     if (proceduralData.uniforms != _data.uniforms) {
+        // If the uniform keys changed, we need to recreate the whole shader to handle the reflection
+        if (proceduralData.uniforms.keys() != _data.uniforms.keys()) {
+            _shaderDirty = true;
+        }
         _data.uniforms = proceduralData.uniforms;
         _uniformsDirty = true;
     }
@@ -217,6 +239,7 @@ bool Procedural::isReady() const {
     return false;
 #endif
 
+    std::lock_guard<std::mutex> lock(_lock);
     if (!_enabled) {
         return false;
     }
@@ -280,6 +303,7 @@ void Procedural::prepare(gpu::Batch& batch,
                          const glm::vec3& size,
                          const glm::quat& orientation,
                          const ProceduralProgramKey key) {
+    std::lock_guard<std::mutex> lock(_lock);
     _entityDimensions = size;
     _entityPosition = position;
     _entityOrientation = glm::mat3_cast(orientation);
@@ -372,12 +396,13 @@ void Procedural::prepare(gpu::Batch& batch,
 
     batch.setPipeline(recompiledShader ? _proceduralPipelines[key] : *pipeline);
 
-    if (_shaderDirty || _uniformsDirty || _prevKey != key) {
+    bool recreateUniforms = _shaderDirty || _uniformsDirty || recompiledShader || _prevKey != key;
+    if (recreateUniforms) {
         setupUniforms(key);
     }
 
-    if (_shaderDirty || _uniformsDirty || _channelsDirty || _prevKey != key) {
-        setupChannels(_shaderDirty || _uniformsDirty, key);
+    if (recreateUniforms || _channelsDirty) {
+        setupChannels(recreateUniforms, key);
     }
 
     _prevKey = key;
@@ -518,10 +543,10 @@ void Procedural::setupChannels(bool shouldCreate, ProceduralProgramKey key) {
 
     if (uniformSlots.isValid(procedural::slot::uniform::ChannelResolution)) {
         if (!shouldCreate) {
-            // Instead of modifying the last element, just remove and recreate it.
+            // Instead of adding new elements, remove the old one and recreate it
             _uniforms.pop_back();
         }
-        _uniforms.push_back([=](gpu::Batch& batch) {
+        _uniforms.push_back([this](gpu::Batch& batch) {
             vec3 channelSizes[MAX_PROCEDURAL_TEXTURE_CHANNELS];
             for (size_t i = 0; i < MAX_PROCEDURAL_TEXTURE_CHANNELS; ++i) {
                 if (_channels[i]) {

@@ -53,6 +53,8 @@ public:
         UNIFORM_BUFFER,
         RESOURCE_BUFFER,
         UNIFORM,
+
+        NUM_BINDINGTYPES
     };
 
     using LocationMap = std::unordered_map<std::string, int32_t>;
@@ -82,7 +84,40 @@ public:
         public:
             bool operator()(const Source& x, const Source& y) const {
                 if (x._lang == y._lang) {
-                    return x._code < y._code;
+                    if (x._code == y._code) {
+                        if (x._reflection.size() == y._reflection.size()) {
+                            for (int i = (int)BindingType::INPUT; i < (int)BindingType::NUM_BINDINGTYPES; i++) {
+                                auto& xBindings = x._reflection.find(BindingType(i));
+                                auto& yBindings = y._reflection.find(BindingType(i));
+                                if (xBindings == x._reflection.end() && yBindings != y._reflection.end()) {
+                                    return true;
+                                } else if (xBindings != x._reflection.end() && yBindings != y._reflection.end()) {
+                                    auto& xLocations = xBindings->second;
+                                    auto& yLocations = yBindings->second;
+                                    if (xLocations.size() == yLocations.size()) {
+                                        for (auto xLocation = xLocations.begin(), yLocation = yLocations.begin(); xLocation != xLocations.end(), yLocation != yLocations.end(); xLocation++, yLocation++) {
+                                            if (xLocation->first == yLocation->first) {
+                                                if (xLocation->second < yLocation->second) {
+                                                    return true;
+                                                } else if (xLocation->second > yLocation->second) {
+                                                    return false;
+                                                }
+                                            } else {
+                                                return xLocation->first < yLocation->first;
+                                            }
+                                        }
+                                    } else {
+                                        return xLocations.size() < yLocations.size();
+                                    }
+                                }
+                            }
+                            return false;
+                        } else {
+                            return x._reflection.size() < y._reflection.size();
+                        }
+                    } else {
+                        return x._code < y._code;
+                    }
                 } else {
                     return (x._lang < y._lang);
                 }
@@ -242,9 +277,6 @@ public:
 protected:
     Shader(Type type, const Source& source);
     Shader(Type type, const Pointer& vertex, const Pointer& geometry, const Pointer& pixel);
-
-    Shader(const Shader& shader);             // deep copy of the sysmem shader
-    Shader& operator=(const Shader& shader);  // deep copy of the sysmem texture
 
     // Source contains the actual source code or nothing if the shader is a program
     Source _source;

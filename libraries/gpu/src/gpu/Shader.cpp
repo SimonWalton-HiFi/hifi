@@ -156,7 +156,6 @@ ShaderPointer Shader::createOrReuseProgramShader(Type type, const Pointer& verte
         if (0 != reflection.count(BindingType::UNIFORM)) {
             populateSlotSet(program->_uniforms, reflection.find(BindingType::UNIFORM)->second);
         }
-
     }
 
     _programMap.emplace(key, std::weak_ptr<Shader>(program));

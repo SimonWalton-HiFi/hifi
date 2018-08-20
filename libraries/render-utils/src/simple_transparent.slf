@@ -60,9 +60,8 @@ void main(void) {
 #elif defined(PROCEDURAL_V2)
     emissiveAmount = getProceduralColors(diffuse, specular, shininess);
 #elif defined(PROCEDURAL_V3)
-    TransformCamera cam = getTransformCamera();
     vec4 position = cam._viewInverse * _positionES;
-    ProceduralData proceduralData = {
+    ProceduralFragmentData proceduralData = {
         position.xyz,
         normal,
         vec3(0.0),
@@ -78,22 +77,22 @@ void main(void) {
     position = vec4(proceduralData.position, 1.0);
     vec4 posEye = cam._view * position;
     if (emissiveAmount > 0.0) {
-        _fragColor0 = vec4(procedural.diffuse, procedural.alpha);
+        _fragColor0 = vec4(proceduralData.diffuse, proceduralData.alpha);
     } else {
         _fragColor0 = vec4(evalGlobalLightingAlphaBlendedWithHaze(
             cam._viewInverse,
             1.0,
-            procedural.occlusion,
+            proceduralData.occlusion,
             posEye.xyz,
-            procedural.normal,
-            procedural.diffuse,
+            proceduralData.normal,
+            proceduralData.diffuse,
             proceduralData.specular,
             proceduralData.metallic,
-            procedural.emissive,
-            procedural.roughness, procedural.alpha),
-            procedural.alpha);
+            proceduralData.emissive,
+            proceduralData.roughness, proceduralData.alpha),
+            proceduralData.alpha);
     }
-    vec4 posClip = cam._projection * posES;
+    vec4 posClip = cam._projection * posEye;
     float far = gl_DepthRange.far;
     float near = gl_DepthRange.near;
     gl_FragDepth = 0.5 * ((far - near) * posClip.z / posClip.w + near + far);
