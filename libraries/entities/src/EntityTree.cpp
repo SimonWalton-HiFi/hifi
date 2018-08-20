@@ -2591,7 +2591,8 @@ bool EntityTree::readFromMap(QVariantMap& map) {
 
         // Convert old procedurals so that they use proceduralData instead of userData
         if (contentVersion < (int)EntityVersion::ProceduralData && (properties.getType() == EntityTypes::EntityType::Shape ||
-            properties.getType() == EntityTypes::EntityType::Box || properties.getType() == EntityTypes::EntityType::Sphere)) {
+            properties.getType() == EntityTypes::EntityType::Box || properties.getType() == EntityTypes::EntityType::Sphere ||
+            properties.getType() == EntityTypes::EntityType::Zone)) {
             QJsonObject userData = QJsonDocument::fromJson(properties.getUserData().toUtf8()).object();
             QJsonObject proceduralData;
 

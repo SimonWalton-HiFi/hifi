@@ -87,15 +87,15 @@ public:
                     if (x._code == y._code) {
                         if (x._reflection.size() == y._reflection.size()) {
                             for (int i = (int)BindingType::INPUT; i < (int)BindingType::NUM_BINDINGTYPES; i++) {
-                                auto& xBindings = x._reflection.find(BindingType(i));
-                                auto& yBindings = y._reflection.find(BindingType(i));
+                                auto xBindings = x._reflection.find(BindingType(i));
+                                auto yBindings = y._reflection.find(BindingType(i));
                                 if (xBindings == x._reflection.end() && yBindings != y._reflection.end()) {
                                     return true;
                                 } else if (xBindings != x._reflection.end() && yBindings != y._reflection.end()) {
                                     auto& xLocations = xBindings->second;
                                     auto& yLocations = yBindings->second;
                                     if (xLocations.size() == yLocations.size()) {
-                                        for (auto xLocation = xLocations.begin(), yLocation = yLocations.begin(); xLocation != xLocations.end(), yLocation != yLocations.end(); xLocation++, yLocation++) {
+                                        for (auto xLocation = xLocations.begin(), yLocation = yLocations.begin(); xLocation != xLocations.end() && yLocation != yLocations.end(); xLocation++, yLocation++) {
                                             if (xLocation->first == yLocation->first) {
                                                 if (xLocation->second < yLocation->second) {
                                                     return true;

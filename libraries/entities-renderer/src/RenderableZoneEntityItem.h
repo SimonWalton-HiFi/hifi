@@ -61,7 +61,7 @@ private:
     void setSkyboxMode(ComponentMode mode);
 
     void setSkyboxColor(const glm::vec3& color);
-    void setProceduralUserData(const QString& userData);
+    void setProceduralData(const QString& proceduralData);
 
     graphics::LightPointer editSunLight() { _needSunUpdate = true; return _sunLight; }
     graphics::LightPointer editAmbientLight() { _needAmbientUpdate = true; return _ambientLight; }
@@ -122,7 +122,7 @@ private:
     NetworkTexturePointer _skyboxTexture;
     bool _pendingSkyboxTexture{ false };
 
-    QString _proceduralUserData;
+    QString _proceduralData;
 };
 
 } } // namespace 

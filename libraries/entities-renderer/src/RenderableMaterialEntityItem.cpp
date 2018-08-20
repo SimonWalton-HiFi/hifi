@@ -62,11 +62,14 @@ ItemKey MaterialEntityRenderer::getKey() {
 ShapeKey MaterialEntityRenderer::getShapeKey() {
     ShapeKey::Builder builder;
     graphics::MaterialKey drawMaterialKey;
-    drawMaterialKey = _drawMaterial->getKey();
+    if (_drawMaterial) {
+        drawMaterialKey = _drawMaterial->getKey();
+    }
+
     if (drawMaterialKey.isTranslucent()) {
         builder.withTranslucent();
     }
-    if (_drawMaterial->getProcedural().isReady()) {
+    if (_drawMaterial && _drawMaterial->getProcedural().isReady()) {
         builder.withOwnPipeline();
     } else {
         bool hasTangents = drawMaterialKey.isNormalMap();
@@ -108,14 +111,14 @@ void MaterialEntityRenderer::doRender(RenderArgs* args) {
         textureTransform.setTranslation(glm::vec3(_materialMappingPos, 0));
         textureTransform.setRotation(glm::vec3(0, 0, glm::radians(_materialMappingRot)));
         textureTransform.setScale(glm::vec3(_materialMappingScale, 1));
-        if (_drawMaterial->getProcedural().isReady()) {
-            outColor = _drawMaterial->getProcedural().getColor(outColor);
-            outColor.a = 1.0f;
-            _drawMaterial->editProcedural().prepare(batch, renderTransform.getTranslation(), renderTransform.getScale(), renderTransform.getRotation(), ProceduralProgramKey(outColor.a < 1.0f));
+        if (drawMaterial && drawMaterial->getProcedural().isReady()) {
+            outColor = glm::vec4(drawMaterial->getAlbedo(), 1.0f);
+            outColor = drawMaterial->getProcedural().getColor(outColor);
+            drawMaterial->editProcedural().prepare(batch, renderTransform.getTranslation(), renderTransform.getScale(), renderTransform.getRotation(), ProceduralProgramKey());
             proceduralRender = true;
         }
     });
-    if (!parentID.isNull()) {
+    if (!parentID.isNull() || !drawMaterial) {
         return;
     }
 
@@ -133,7 +136,7 @@ void MaterialEntityRenderer::doRender(RenderArgs* args) {
         // Draw!
         DependencyManager::get<GeometryCache>()->renderSphere(batch);
     } else {
-        DependencyManager::get<GeometryCache>()->renderShape(batch, GeometryCache::Shape::Sphere, outColor);
+        DependencyManager::get<GeometryCache>()->renderSphere(batch, outColor);
     }
 
     args->_details._trianglesRendered += (int)DependencyManager::get<GeometryCache>()->getSphereTriangleCount();

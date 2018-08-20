@@ -1181,6 +1181,9 @@ EntityPropertyFlags EntityItemProperties::getChangedProperties() const {
  *     return properties;
  * }
  * </pre>
+ * @property {string} proceduralData="" - Used to store {@link ProceduralData} as a JSON string. You can use
+ *     <code>JSON.parse()</code> to parse the string into a JavaScript object to manipulate its properties, and
+ *     use <code>JSON.stringify()</code> to convert the object into a string to put in the property.
  *
  * @example <caption>Create a zone that casts a red key light along the x-axis.</caption>
  * var zone = Entities.addEntity({
@@ -1389,6 +1392,8 @@ QScriptValue EntityItemProperties::copyToScriptValue(QScriptEngine* engine, bool
         COPY_PROPERTY_TO_QSCRIPTVALUE_GETTER(PROP_KEY_LIGHT_MODE, keyLightMode, getKeyLightModeAsString());
         COPY_PROPERTY_TO_QSCRIPTVALUE_GETTER(PROP_AMBIENT_LIGHT_MODE, ambientLightMode, getAmbientLightModeAsString());
         COPY_PROPERTY_TO_QSCRIPTVALUE_GETTER(PROP_SKYBOX_MODE, skyboxMode, getSkyboxModeAsString());
+
+        COPY_PROPERTY_TO_QSCRIPTVALUE(PROP_PROCEDURAL_DATA, proceduralData);
     }
 
     // Web only
@@ -2367,6 +2372,8 @@ OctreeElement::AppendState EntityItemProperties::encodeEntityEditPacket(PacketTy
                 APPEND_ENTITY_PROPERTY(PROP_KEY_LIGHT_MODE, (uint32_t)properties.getKeyLightMode());
                 APPEND_ENTITY_PROPERTY(PROP_AMBIENT_LIGHT_MODE, (uint32_t)properties.getAmbientLightMode());
                 APPEND_ENTITY_PROPERTY(PROP_SKYBOX_MODE, (uint32_t)properties.getSkyboxMode());
+
+                APPEND_ENTITY_PROPERTY(PROP_PROCEDURAL_DATA, properties.getProceduralData());
             }
 
             if (properties.getType() == EntityTypes::PolyVox) {
@@ -2742,6 +2749,8 @@ bool EntityItemProperties::decodeEntityEditPacket(const unsigned char* data, int
         READ_ENTITY_PROPERTY_TO_PROPERTIES(PROP_KEY_LIGHT_MODE, uint32_t, setKeyLightMode);
         READ_ENTITY_PROPERTY_TO_PROPERTIES(PROP_AMBIENT_LIGHT_MODE, uint32_t, setAmbientLightMode);
         READ_ENTITY_PROPERTY_TO_PROPERTIES(PROP_SKYBOX_MODE, uint32_t, setSkyboxMode);
+
+        READ_ENTITY_PROPERTY_TO_PROPERTIES(PROP_PROCEDURAL_DATA, QString, setProceduralData);
     }
 
     if (properties.getType() == EntityTypes::PolyVox) {

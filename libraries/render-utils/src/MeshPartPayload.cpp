@@ -165,7 +165,7 @@ void MeshPartPayload::render(RenderArgs* args) {
     //Bind the index buffer and vertex buffer and Blend shapes if needed
     bindMesh(batch);
 
-    if (!_drawMaterials.empty() && _drawMaterials.top().material->getProcedural().isReady()) {
+    if (topMaterialExists() && _drawMaterials.top().material->getProcedural().isReady()) {
         glm::vec4 outColor = glm::vec4(_drawMaterials.top().material->getAlbedo(), _drawMaterials.top().material->getOpacity());
         outColor = _drawMaterials.top().material->getProcedural().getColor(outColor);
         _drawMaterials.top().material->editProcedural().prepare(batch, _drawTransform.getTranslation(), _drawTransform.getScale(), _drawTransform.getRotation(),
@@ -173,7 +173,7 @@ void MeshPartPayload::render(RenderArgs* args) {
     } else {
          // apply material properties
         if (args->_renderMode != render::Args::RenderMode::SHADOW_RENDER_MODE) {
-            RenderPipelines::bindMaterial(!_drawMaterials.empty() ? _drawMaterials.top().material : DEFAULT_MATERIAL, batch, args->_enableTexturing);
+            RenderPipelines::bindMaterial(topMaterialExists() ? _drawMaterials.top().material : DEFAULT_MATERIAL, batch, args->_enableTexturing);
             args->_details._materialSwitches++;
         }
     }
@@ -440,7 +440,7 @@ void ModelMeshPartPayload::render(RenderArgs* args) {
     //Bind the index buffer and vertex buffer and Blend shapes if needed
     bindMesh(batch);
 
-    if (!_drawMaterials.empty() && _drawMaterials.top().material->getProcedural().isReady()) {
+    if (topMaterialExists() && _drawMaterials.top().material->getProcedural().isReady()) {
         glm::vec4 outColor = glm::vec4(_drawMaterials.top().material->getAlbedo(), _drawMaterials.top().material->getOpacity());
         outColor = _drawMaterials.top().material->getProcedural().getColor(outColor);
         _drawMaterials.top().material->editProcedural().prepare(batch, _transform.getTranslation(), _transform.getScale(), _transform.getRotation(),
@@ -448,7 +448,7 @@ void ModelMeshPartPayload::render(RenderArgs* args) {
     } else {
          // apply material properties
         if (args->_renderMode != render::Args::RenderMode::SHADOW_RENDER_MODE) {
-            RenderPipelines::bindMaterial(!_drawMaterials.empty() ? _drawMaterials.top().material : DEFAULT_MATERIAL, batch, args->_enableTexturing);
+            RenderPipelines::bindMaterial(topMaterialExists() ? _drawMaterials.top().material : DEFAULT_MATERIAL, batch, args->_enableTexturing);
             args->_details._materialSwitches++;
         }
     }

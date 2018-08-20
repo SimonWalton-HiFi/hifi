@@ -88,7 +88,10 @@ public:
     bool getGhostingAllowed() const { return _ghostingAllowed; }
     void setGhostingAllowed(bool value) { _ghostingAllowed = value; }
     QString getFilterURL() const;
-    void setFilterURL(const QString url); 
+    void setFilterURL(const QString url);
+
+    void setProceduralData(const QString& proceduralData);
+    QString getProceduralData() const { return _proceduralData; }
 
     bool keyLightPropertiesChanged() const { return _keyLightPropertiesChanged; }
     bool ambientLightPropertiesChanged() const { return _ambientLightPropertiesChanged; }
@@ -140,6 +143,8 @@ protected:
     bool _flyingAllowed { DEFAULT_FLYING_ALLOWED };
     bool _ghostingAllowed { DEFAULT_GHOSTING_ALLOWED };
     QString _filterURL { DEFAULT_FILTER_URL };
+
+    QString _proceduralData;
 
     // Dirty flags turn true when either keylight properties is changing values.
     bool _keyLightPropertiesChanged { false };

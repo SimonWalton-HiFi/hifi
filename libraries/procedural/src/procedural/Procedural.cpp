@@ -128,6 +128,7 @@ Procedural::Procedural(const Procedural& other) {
     _vertexSourceSkin = other._vertexSourceSkin;
     _vertexSourceSkinDQ = other._vertexSourceSkinDQ;
     _opaqueFragmentSource = other._opaqueFragmentSource;
+    _transparentFragmentSource = other._transparentFragmentSource;
     _opaqueState = other._opaqueState;
     _transparentState = other._transparentState;
 

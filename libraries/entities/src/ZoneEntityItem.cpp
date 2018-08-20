@@ -75,6 +75,8 @@ EntityItemProperties ZoneEntityItem::getProperties(EntityPropertyFlags desiredPr
     COPY_ENTITY_PROPERTY_TO_PROPERTIES(ambientLightMode, getAmbientLightMode);
     COPY_ENTITY_PROPERTY_TO_PROPERTIES(skyboxMode, getSkyboxMode);
 
+    COPY_ENTITY_PROPERTY_TO_PROPERTIES(proceduralData, getProceduralData);
+
     return properties;
 }
 
@@ -125,6 +127,8 @@ bool ZoneEntityItem::setSubClassProperties(const EntityItemProperties& propertie
     SET_ENTITY_PROPERTY_FROM_PROPERTIES(keyLightMode, setKeyLightMode);
     SET_ENTITY_PROPERTY_FROM_PROPERTIES(ambientLightMode, setAmbientLightMode);
     SET_ENTITY_PROPERTY_FROM_PROPERTIES(skyboxMode, setSkyboxMode);
+
+    SET_ENTITY_PROPERTY_FROM_PROPERTIES(proceduralData, setProceduralData);
 
     somethingChanged = somethingChanged || _keyLightPropertiesChanged || _ambientLightPropertiesChanged ||
         _stagePropertiesChanged || _skyboxPropertiesChanged || _hazePropertiesChanged;
@@ -188,6 +192,8 @@ int ZoneEntityItem::readEntitySubclassDataFromBuffer(const unsigned char* data, 
     READ_ENTITY_PROPERTY(PROP_AMBIENT_LIGHT_MODE, uint32_t, setAmbientLightMode);
     READ_ENTITY_PROPERTY(PROP_SKYBOX_MODE, uint32_t, setSkyboxMode);
 
+    READ_ENTITY_PROPERTY(PROP_PROCEDURAL_DATA, QString, setProceduralData);
+
     return bytesRead;
 }
 
@@ -219,6 +225,8 @@ EntityPropertyFlags ZoneEntityItem::getEntityProperties(EncodeBitstreamParams& p
     requestedProperties += PROP_KEY_LIGHT_MODE;
     requestedProperties += PROP_AMBIENT_LIGHT_MODE;
     requestedProperties += PROP_SKYBOX_MODE;
+
+    requestedProperties += PROP_PROCEDURAL_DATA;
 
     return requestedProperties;
 }
@@ -256,18 +264,20 @@ void ZoneEntityItem::appendSubclassData(OctreePacketData* packetData, EncodeBits
     APPEND_ENTITY_PROPERTY(PROP_KEY_LIGHT_MODE, (uint32_t)getKeyLightMode());
     APPEND_ENTITY_PROPERTY(PROP_AMBIENT_LIGHT_MODE, (uint32_t)getAmbientLightMode());
     APPEND_ENTITY_PROPERTY(PROP_SKYBOX_MODE, (uint32_t)getSkyboxMode());
+
+    APPEND_ENTITY_PROPERTY(PROP_PROCEDURAL_DATA, getProceduralData());
 }
 
 void ZoneEntityItem::debugDump() const {
     quint64 now = usecTimestampNow();
     qCDebug(entities) << "   ZoneEntityItem id:" << getEntityItemID() << "---------------------------------------------";
-    qCDebug(entities) << "                  position:" << debugTreeVector(getWorldPosition());
-    qCDebug(entities) << "                dimensions:" << debugTreeVector(getScaledDimensions());
-    qCDebug(entities) << "             getLastEdited:" << debugTime(getLastEdited(), now);
-    qCDebug(entities) << "               _hazeMode:" << EntityItemProperties::getComponentModeString(_hazeMode);
-    qCDebug(entities) << "               _keyLightMode:" << EntityItemProperties::getComponentModeString(_keyLightMode);
-    qCDebug(entities) << "               _ambientLightMode:" << EntityItemProperties::getComponentModeString(_ambientLightMode);
-    qCDebug(entities) << "               _skyboxMode:" << EntityItemProperties::getComponentModeString(_skyboxMode);
+    qCDebug(entities) << "            position:" << debugTreeVector(getWorldPosition());
+    qCDebug(entities) << "          dimensions:" << debugTreeVector(getScaledDimensions());
+    qCDebug(entities) << "       getLastEdited:" << debugTime(getLastEdited(), now);
+    qCDebug(entities) << "           _hazeMode:" << EntityItemProperties::getComponentModeString(_hazeMode);
+    qCDebug(entities) << "       _keyLightMode:" << EntityItemProperties::getComponentModeString(_keyLightMode);
+    qCDebug(entities) << "   _ambientLightMode:" << EntityItemProperties::getComponentModeString(_ambientLightMode);
+    qCDebug(entities) << "         _skyboxMode:" << EntityItemProperties::getComponentModeString(_skyboxMode);
 
     _keyLightProperties.debugDump();
     _ambientLightProperties.debugDump();
@@ -390,4 +400,10 @@ void ZoneEntityItem::setSkyboxMode(const uint32_t value) {
 
 uint32_t ZoneEntityItem::getSkyboxMode() const {
     return _skyboxMode;
+}
+
+void ZoneEntityItem::setProceduralData(const QString& proceduralData) {
+    if (getProceduralData() != proceduralData) {
+        _proceduralData = proceduralData;
+    }
 }

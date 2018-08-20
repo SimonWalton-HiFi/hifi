@@ -10,7 +10,6 @@
 //
 #include "ProceduralSkybox.h"
 
-
 #include <gpu/Batch.h>
 #include <gpu/Context.h>
 #include <gpu/Shader.h>
@@ -18,8 +17,8 @@
 #include <shaders/Shaders.h>
 
 ProceduralSkybox::ProceduralSkybox() : graphics::Skybox() {
-    _procedural._vertexSource = gpu::Shader::createVertex(shader::graphics::vertex::skybox)->getSource();
-    _procedural._opaqueFragmentSource = gpu::Shader::createPixel(shader::procedural::fragment::proceduralSkybox)->getSource();
+    _procedural._vertexSource = gpu::Shader::getVertexShaderSource(shader::graphics::vertex::skybox);
+    _procedural._opaqueFragmentSource = gpu::Shader::getFragmentShaderSource(shader::procedural::fragment::proceduralSkybox);
     _procedural.setDoesFade(false);
     // Adjust the pipeline state for background using the stencil test
     // Must match PrepareStencil::STENCIL_BACKGROUND
@@ -35,7 +34,6 @@ bool ProceduralSkybox::empty() {
 void ProceduralSkybox::clear() {
     // Parse and prepare a procedural with no shaders to release textures
     parse(QString());
-    _procedural.isReady();
 
     Skybox::clear();
 }

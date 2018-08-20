@@ -251,7 +251,7 @@ void ZoneEntityRenderer::doRenderUpdateSynchronousTyped(const ScenePointer& scen
         updateAmbientLightFromEntity(entity);
     }
 
-    if (skyboxChanged || _proceduralUserData != entity->getUserData()) {
+    if (skyboxChanged || _proceduralData != entity->getProceduralData()) {
         updateKeyBackgroundFromEntity(entity);
     }
 
@@ -295,7 +295,7 @@ bool ZoneEntityRenderer::needsRenderUpdateFromTypedEntity(const TypedEntityPoint
         return true;
     }
 
-    if (entity->getUserData() != _proceduralUserData) {
+    if (entity->getProceduralData() != _proceduralData) {
         return true;
     }
 
@@ -393,7 +393,7 @@ void ZoneEntityRenderer::updateKeyBackgroundFromEntity(const TypedEntityPointer&
 
     editBackground();
     setSkyboxColor(_skyboxProperties.getColorVec3());
-    setProceduralUserData(entity->getUserData());
+    setProceduralData(entity->getProceduralData());
     setSkyboxURL(_skyboxProperties.getURL());
 }
 
@@ -514,10 +514,10 @@ void ZoneEntityRenderer::setSkyboxColor(const glm::vec3& color) {
     editSkybox()->setColor(color);
 }
 
-void ZoneEntityRenderer::setProceduralUserData(const QString& userData) {
-    if (_proceduralUserData != userData) {
-        _proceduralUserData = userData;
-        std::dynamic_pointer_cast<ProceduralSkybox>(editSkybox())->parse(_proceduralUserData);
+void ZoneEntityRenderer::setProceduralData(const QString& proceduralData) {
+    if (_proceduralData != proceduralData) {
+        _proceduralData = proceduralData;
+        std::dynamic_pointer_cast<ProceduralSkybox>(editSkybox())->parse(_proceduralData);
     }
 }
 

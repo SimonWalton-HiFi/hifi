@@ -1614,23 +1614,25 @@ input#reset-to-natural-dimensions {
 #properties-list.ZoneMenu #zone {
     order: 2;
 }
-#properties-list.ZoneMenu #physical {
+#properties-list.ZoneMenu #procedural {
     order: 3;
 }
-#properties-list.ZoneMenu #spatial {
+#properties-list.ZoneMenu #physical {
     order: 4;
 }
-#properties-list.ZoneMenu #behavior {
+#properties-list.ZoneMenu #spatial {
     order: 5;
 }
-#properties-list.ZoneMenu #collision-info {
+#properties-list.ZoneMenu #behavior {
     order: 6;
 }
-#properties-list.ZoneMenu #hyperlink {
+#properties-list.ZoneMenu #collision-info {
     order: 7;
 }
+#properties-list.ZoneMenu #hyperlink {
+    order: 8;
+}
 /* sections to hide    */
-#properties-list.ZoneMenu #procedural,
 #properties-list.ZoneMenu #material,
 #properties-list.ZoneMenu #light,
 #properties-list.ZoneMenu #model,
