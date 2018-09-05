@@ -79,7 +79,6 @@ void AABox::setBox(const glm::vec3& corner, const glm::vec3& scale) {
 
 glm::vec3 AABox::getFarthestVertex(const glm::vec3& normal) const {
     glm::vec3 result = _corner;
-<<<<<<< HEAD
     // This is a branchless version of:
     //if (normal.x > 0.0f) {
     //    result.x += _scale.x;
@@ -90,8 +89,6 @@ glm::vec3 AABox::getFarthestVertex(const glm::vec3& normal) const {
     //if (normal.z > 0.0f) {
     //    result.z += _scale.z;
     //}
-=======
->>>>>>> 6ae2ca1576... Merge commit '5f08ed5027a8904242a47b17e994ab4f309e3930' into avatar-mixer-scaling
     float blend = (float)(normal.x > 0.0f);
     result.x += blend * _scale.x + (1.0f - blend) * 0.0f;
     blend = (float)(normal.y > 0.0f);
@@ -103,7 +100,6 @@ glm::vec3 AABox::getFarthestVertex(const glm::vec3& normal) const {
 
 glm::vec3 AABox::getNearestVertex(const glm::vec3& normal) const {
     glm::vec3 result = _corner;
-<<<<<<< HEAD
     // This is a branchless version of:
     //if (normal.x < 0.0f) {
     //    result.x += _scale.x;
@@ -114,8 +110,6 @@ glm::vec3 AABox::getNearestVertex(const glm::vec3& normal) const {
     //if (normal.z < 0.0f) {
     //    result.z += _scale.z;
     //}
-=======
->>>>>>> 6ae2ca1576... Merge commit '5f08ed5027a8904242a47b17e994ab4f309e3930' into avatar-mixer-scaling
     float blend = (float)(normal.x < 0.0f);
     result.x += blend * _scale.x + (1.0f - blend) * 0.0f;
     blend = (float)(normal.y < 0.0f);

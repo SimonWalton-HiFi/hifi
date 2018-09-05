@@ -441,11 +441,6 @@ void AvatarMixerSlave::broadcastAvatarDataToAgent(const SharedNodePointer& node)
     const auto& sortedAvatarVector = sortedAvatars.getSortedVector();
     for (const auto& sortedAvatar : sortedAvatarVector) {
         const auto& avatarData = sortedAvatar.getAvatar();
-<<<<<<< HEAD
-=======
-        const Node* otherNode = sortedAvatar.getNode();
-        auto lastEncodeForOther = sortedAvatar.getTimestamp();
->>>>>>> 6ae2ca1576... Merge commit '5f08ed5027a8904242a47b17e994ab4f309e3930' into avatar-mixer-scaling
         remainingAvatars--;
 
         assert(otherNode); // we can't have gotten here without the avatarData being a valid key in the map

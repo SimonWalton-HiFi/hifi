@@ -234,11 +234,7 @@ void GLMHelpersTests::roundPerf() {
     auto glmTime = std::chrono::high_resolution_clock::now() - start;
     start = std::chrono::high_resolution_clock::now();
     for (auto& vec : vecs2) {
-<<<<<<< HEAD
         vec = glm::vec3(fastLrintf(vec.x), fastLrintf(vec.y), fastLrintf(vec.z));
-=======
-        vec = fastRoundf(vec);
->>>>>>> 6ae2ca1576... Merge commit '5f08ed5027a8904242a47b17e994ab4f309e3930' into avatar-mixer-scaling
     }
     auto manualTime = std::chrono::high_resolution_clock::now() - start;
 

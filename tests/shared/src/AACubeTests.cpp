@@ -174,11 +174,7 @@ void AACubeTests::rayVsParabolaPerformance() {
     glm::vec3 normal;
     auto start = std::chrono::high_resolution_clock::now();
     for (auto& cube : cubes) {
-<<<<<<< HEAD
         if (cube.findRayIntersection(origin, direction, invDirection, distance, face, normal)) {
-=======
-        if (cube.findRayIntersection(origin, direction, 1.0f / direction, distance, face, normal)) {
->>>>>>> 6ae2ca1576... Merge commit '5f08ed5027a8904242a47b17e994ab4f309e3930' into avatar-mixer-scaling
             numRayHits++;
         }
     }

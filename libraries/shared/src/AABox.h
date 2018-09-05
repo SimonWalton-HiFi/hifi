@@ -86,7 +86,6 @@ public:
     AABox clamp(float min, float max) const;
 
     inline AABox& operator+=(const glm::vec3& point) {
-<<<<<<< HEAD
         // Branchless version of:
         //if (isInvalid()) {
         //    _corner = glm::min(_corner, point);
@@ -96,8 +95,6 @@ public:
         //    maximum = glm::max(maximum, point);
         //    _scale = maximum - _corner;
         //}
-=======
->>>>>>> 6ae2ca1576... Merge commit '5f08ed5027a8904242a47b17e994ab4f309e3930' into avatar-mixer-scaling
         float blend = (float)isInvalid();
         glm::vec3 maximumScale(glm::max(_scale, point - _corner));
         _corner = glm::min(_corner, point);
