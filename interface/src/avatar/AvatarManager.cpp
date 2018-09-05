@@ -185,6 +185,7 @@ void AvatarManager::updateOtherAvatars(float deltaTime) {
         }
         ++itr;
     }
+    const auto& sortedAvatarVector = sortedAvatars.getSortedVector();
 
     // process in sorted order
     uint64_t startTime = usecTimestampNow();
@@ -194,11 +195,11 @@ void AvatarManager::updateOtherAvatars(float deltaTime) {
     int numAVatarsNotUpdated = 0;
     bool physicsEnabled = qApp->isPhysicsEnabled();
 
-    render::Transaction transaction;
-    while (!sortedAvatars.empty()) {
-        const SortableAvatar& sortData = sortedAvatars.top();
-        const auto avatar = std::static_pointer_cast<Avatar>(sortData.getAvatar());
-        const auto otherAvatar = std::static_pointer_cast<OtherAvatar>(sortData.getAvatar());
+    render::Transaction renderTransaction;
+    workload::Transaction workloadTransaction;
+    for (auto it = sortedAvatarVector.begin(); it != sortedAvatarVector.end(); ++it) {
+        const SortableAvatar& sortData = *it;
+        const auto avatar = std::static_pointer_cast<OtherAvatar>(sortData.getAvatar());
 
         // if the geometry is loaded then turn off the orb
         if (avatar->getSkeletonModel()->isLoaded()) {
@@ -210,7 +211,6 @@ void AvatarManager::updateOtherAvatars(float deltaTime) {
 
         bool ignoring = DependencyManager::get<NodeList>()->isPersonalMutingNode(avatar->getID());
         if (ignoring) {
-            sortedAvatars.pop();
             continue;
         }
 
@@ -249,27 +249,18 @@ void AvatarManager::updateOtherAvatars(float deltaTime) {
             // --> some scale or fade animations may glitch
             // --> some avatar velocity measurements may be a little off
 
-            // no time simulate, but we take the time to count how many were tragically missed
-            bool inView = sortData.getPriority() > OUT_OF_VIEW_THRESHOLD;
-            if (!inView) {
-                break;
-            }
-            if (inView && avatar->hasNewJointData()) {
-                numAVatarsNotUpdated++;
-            }
-            sortedAvatars.pop();
-            while (inView && !sortedAvatars.empty()) {
-                const SortableAvatar& newSortData = sortedAvatars.top();
+            // no time to simulate, but we take the time to count how many were tragically missed
+            while (it != sortedAvatarVector.end()) {
+                const SortableAvatar& newSortData = *it;
                 const auto newAvatar = std::static_pointer_cast<Avatar>(newSortData.getAvatar());
-                inView = newSortData.getPriority() > OUT_OF_VIEW_THRESHOLD;
+                bool inView = newSortData.getPriority() > OUT_OF_VIEW_THRESHOLD;
                 if (inView && newAvatar->hasNewJointData()) {
                     numAVatarsNotUpdated++;
                 }
-                sortedAvatars.pop();
+                ++it;
             }
             break;
         }
-        sortedAvatars.pop();
     }
 
     if (_shouldRender) {
