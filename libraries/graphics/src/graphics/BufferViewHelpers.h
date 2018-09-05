@@ -54,9 +54,8 @@ namespace buffer_helpers {
         tangent = glm::clamp(tangent, -1.0f, 1.0f);
         normal *= 511.0f;
         tangent *= 511.0f;
-        normal = fastRoundf(normal);
-        tangent = fastRoundf(tangent);
 
+#if 0
         glm::detail::i10i10i10i2 normalStruct;
         glm::detail::i10i10i10i2 tangentStruct;
         normalStruct.data.x = fastLrintf(normal.x);
@@ -69,6 +68,7 @@ namespace buffer_helpers {
         tangentStruct.data.w = 0;
         packedNormal = normalStruct.pack;
         packedTangent = tangentStruct.pack;
+#endif
     }
 
     namespace mesh {

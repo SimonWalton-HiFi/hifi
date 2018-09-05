@@ -62,6 +62,7 @@ namespace {
     }
 }
 
+#if 0
 void packNormalAndTangent(glm::vec3 normal, glm::vec3 tangent, glm::uint32& packedNormal, glm::uint32& packedTangent) {
     auto absNormal = glm::abs(normal);
     auto absTangent = glm::abs(tangent);
@@ -87,6 +88,7 @@ void packNormalAndTangent(glm::vec3 normal, glm::vec3 tangent, glm::uint32& pack
     packedNormal = normalStruct.pack;
     packedTangent = tangentStruct.pack;
 }
+#endif
 
 template <typename T>
 glm::uint32 forEachGlmVec(const gpu::BufferView& view, std::function<bool(glm::uint32 index, const T& value)> func) {
