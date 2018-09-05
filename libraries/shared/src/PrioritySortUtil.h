@@ -102,9 +102,12 @@ namespace PrioritySortUtil {
             thing.setPriority(computePriority(thing));
             _vector.push_back(thing);
         }
+<<<<<<< HEAD
         void reserve(size_t num) {
             _vector.reserve(num);
         }
+=======
+>>>>>>> 6ae2ca1576... Merge commit '5f08ed5027a8904242a47b17e994ab4f309e3930' into avatar-mixer-scaling
         const std::vector<T>& getSortedVector() {
             std::sort(_vector.begin(), _vector.end(), [](const T& left, const T& right) { return left.getPriority() > right.getPriority(); });
             return _vector;

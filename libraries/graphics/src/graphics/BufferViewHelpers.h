@@ -54,6 +54,11 @@ namespace buffer_helpers {
         tangent = glm::clamp(tangent, -1.0f, 1.0f);
         normal *= 511.0f;
         tangent *= 511.0f;
+<<<<<<< HEAD
+=======
+        normal = fastRoundf(normal);
+        tangent = fastRoundf(tangent);
+>>>>>>> 6ae2ca1576... Merge commit '5f08ed5027a8904242a47b17e994ab4f309e3930' into avatar-mixer-scaling
 
         glm::detail::i10i10i10i2 normalStruct;
         glm::detail::i10i10i10i2 tangentStruct;

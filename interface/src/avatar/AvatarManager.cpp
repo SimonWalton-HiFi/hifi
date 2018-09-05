@@ -255,11 +255,17 @@ void AvatarManager::updateOtherAvatars(float deltaTime) {
                 const SortableAvatar& newSortData = *it;
                 const auto newAvatar = std::static_pointer_cast<Avatar>(newSortData.getAvatar());
                 bool inView = newSortData.getPriority() > OUT_OF_VIEW_THRESHOLD;
+<<<<<<< HEAD
                 // Once we reach an avatar that's not in view, all avatars after it will also be out of view
                 if (!inView) {
                     break;
                 }
                 numAVatarsNotUpdated += (int)(newAvatar->hasNewJointData());
+=======
+                if (inView && newAvatar->hasNewJointData()) {
+                    numAVatarsNotUpdated++;
+                }
+>>>>>>> 6ae2ca1576... Merge commit '5f08ed5027a8904242a47b17e994ab4f309e3930' into avatar-mixer-scaling
                 ++it;
             }
             break;

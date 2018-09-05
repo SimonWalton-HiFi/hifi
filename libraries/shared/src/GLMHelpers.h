@@ -316,6 +316,7 @@ inline void glm_mat4u_mul(const glm::mat4& m1, const glm::mat4& m2, glm::mat4& r
 #endif
 }
 
+<<<<<<< HEAD
 // convert float to int, using round-to-nearest-even (undefined on overflow)
 inline int fastLrintf(float x) {
 #if GLM_ARCH & GLM_ARCH_SSE2_BIT
@@ -326,6 +327,13 @@ inline int fastLrintf(float x) {
     union { double d; int64_t i; } bits = { (double)x };
     bits.d += (3ULL << 51);
     return (int)bits.i;
+=======
+inline glm::vec3 fastRoundf(const glm::vec3& vec) {
+#if GLM_ARCH & GLM_ARCH_SSE2_BIT
+    return glm::vec3(_mm_cvt_ss2si(_mm_set_ss(vec.x)), _mm_cvt_ss2si(_mm_set_ss(vec.y)), _mm_cvt_ss2si(_mm_set_ss(vec.z)));
+#else
+    return glm::round(vec);
+>>>>>>> 6ae2ca1576... Merge commit '5f08ed5027a8904242a47b17e994ab4f309e3930' into avatar-mixer-scaling
 #endif
 }
 
