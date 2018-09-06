@@ -739,6 +739,7 @@ void AvatarMixer::sendStatsPacket() {
     QJsonObject slavesObject;
 
     float secondsSinceLastStats = (float)(start - _lastStatsTime) / (float)USECS_PER_SECOND;
+#if 0 // Don't bother with per-slave stats.
     // gather stats
     int slaveNumber = 1;
     _slavePool.each([&](AvatarMixerSlave& slave) {
@@ -775,6 +776,7 @@ void AvatarMixer::sendStatsPacket() {
 
         aggregateStats += stats;
     });
+#endif
 
     QJsonObject slavesAggregatObject;
 
@@ -818,6 +820,7 @@ void AvatarMixer::sendStatsPacket() {
     _processQueuedAvatarDataPacketsLockWaitElapsedTime = 0;
 
     QJsonObject avatarsObject;
+#if 0  // Don't bother with per-nodes stats for now.
     auto nodeList = DependencyManager::get<NodeList>();
     // add stats for each listerner
     nodeList->eachNode([&](const SharedNodePointer& node) {
@@ -847,6 +850,7 @@ void AvatarMixer::sendStatsPacket() {
         avatarsObject[uuidStringWithoutCurlyBraces(node->getUUID())] = avatarStats;
     });
 
+#endif
     statsObject["z_avatars"] = avatarsObject;
 
     ThreadedAssignment::addPacketStatsAndSendStatsPacket(statsObject);
