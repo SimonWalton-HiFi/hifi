@@ -60,11 +60,14 @@
     }
 */
 
+const float OUT_OF_VIEW_PENALTY = -10.0f;
+const float OUT_OF_VIEW_THRESHOLD = 0.5f * OUT_OF_VIEW_PENALTY;
+
 namespace PrioritySortUtil {
 
     constexpr float DEFAULT_ANGULAR_COEF { 1.0f };
     constexpr float DEFAULT_CENTER_COEF { 0.5f };
-    constexpr float DEFAULT_AGE_COEF { 0.25f / (float)(USECS_PER_SECOND) };
+    constexpr float DEFAULT_AGE_COEF { 0.25f  };
 
     class Sortable {
     public:
@@ -136,12 +139,11 @@ namespace PrioritySortUtil {
             float radius = glm::max(thing.getRadius(), MIN_RADIUS);
             // Other item's angle from view centre:
             float cosineAngle = (glm::dot(offset, view.getDirection()) / distance);
-            float age = (float)(_usecCurrentTime - thing.getTimestamp());
+            float age = float((_usecCurrentTime - thing.getTimestamp()) / USECS_PER_SECOND);
 
-            // we modulate "age" drift rate by the cosineAngle term to make peripheral objects sort forward
-            // at a reduced rate but we don't want the "age" term to go zero or negative so we clamp it
-            const float MIN_COSINE_ANGLE_FACTOR = 0.1f;
-            float cosineAngleFactor = glm::max(cosineAngle, MIN_COSINE_ANGLE_FACTOR);
+            // the "age" term accumulates at the sum of all weights
+            float angularSize = radius / distance;
+            float priority = (_angularWeight * angularSize + _centerWeight * cosineAngle) * (age + 1.0f) + _ageWeight * age;
 
             float priority = _angularWeight * radius / distance
                 + _centerWeight * cosineAngle
