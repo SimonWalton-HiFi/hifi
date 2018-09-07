@@ -145,9 +145,6 @@ namespace PrioritySortUtil {
             float angularSize = radius / distance;
             float priority = (_angularWeight * angularSize + _centerWeight * cosineAngle) * (age + 1.0f) + _ageWeight * age;
 
-            float priority = _angularWeight * radius / distance
-                + _centerWeight * cosineAngle
-                + _ageWeight * cosineAngleFactor * age;
 
             // decrement priority of things outside keyhole
             if (distance - radius > view.getRadius()) {
