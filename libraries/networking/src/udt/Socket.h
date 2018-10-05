@@ -14,25 +14,14 @@
 #ifndef hifi_Socket_h
 #define hifi_Socket_h
 
-#include <qglobal.h>
-
-#ifdef Q_OS_WIN
-#include <winsock2.h>
-#else
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#endif
-
 #include <functional>
 #include <unordered_map>
 #include <mutex>
+#include <list>
 
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
-
-#include <tbb/concurrent_queue.h>
+#include <QtNetwork/QUdpSocket>
 
 #include "../HifiSockAddr.h"
 #include "../NLPacketList.h"
@@ -49,7 +38,6 @@ class BasePacket;
 class Packet;
 class PacketList;
 class SequenceNumber;
-class DatagramReceiver;
 
 using PacketFilterOperator = std::function<bool(const Packet&)>;
 using ConnectionCreationFilterOperator = std::function<bool(const HifiSockAddr&)>;
@@ -59,31 +47,6 @@ using PacketHandler = std::function<void(std::unique_ptr<Packet>)>;
 using MessageHandler = std::function<void(std::unique_ptr<Packet>)>;
 using MessageFailureHandler = std::function<void(HifiSockAddr, udt::Packet::MessageNumber)>;
 
-struct Datagram {
-    QHostAddress _senderAddress;
-    int _senderPort;
-    int _datagramLength;
-    std::unique_ptr<char[]> _datagram;
-    p_high_resolution_clock::time_point _receiveTime;
-};
-
-class DatagramReceiver : public QObject {
-    Q_OBJECT
-
-public:
-    DatagramReceiver(tbb::concurrent_queue<Datagram>& incomingDatagrams,
-                     std::atomic_bool& waitingForPackets);
-
-    void run(int fd);
-
-signals:
-    void pendingDatagrams(int datagramCount);
-
-private:
-    tbb::concurrent_queue<Datagram>& _incomingDatagrams;
-    std::atomic_bool& _waitingForPackets;
-};
-
 class Socket : public QObject {
     Q_OBJECT
 
@@ -92,11 +55,10 @@ class Socket : public QObject {
 
 public:
     using StatsVector = std::vector<std::pair<HifiSockAddr, ConnectionStats::Stats>>;
-
-    Socket(QObject* object = 0, bool shouldChangeSocketOptions = true);
-    ~Socket();
     
-    quint16 localPort() const { return _localPort; }
+    Socket(QObject* object = 0, bool shouldChangeSocketOptions = true);
+    
+    quint16 localPort() const { return _udpSocket.localPort(); }
     
     // Simple functions writing to the socket with no processing
     qint64 writeBasePacket(const BasePacket& packet, const HifiSockAddr& sockAddr);
@@ -109,6 +71,7 @@ public:
     
     void bind(const QHostAddress& address, quint16 port = 0);
     void rebind(quint16 port);
+    void rebind();
 
     void setPacketFilterOperator(PacketFilterOperator filterOperator) { _packetFilterOperator = filterOperator; }
     void setPacketHandler(PacketHandler handler) { _packetHandler = handler; }
@@ -140,7 +103,8 @@ public slots:
     void clearConnections();
     
 private slots:
-    void processPendingDatagrams(int datagramCount);
+    void readPendingDatagrams();
+    void checkForReadyReadBackup();
 
     void handleSocketError(QAbstractSocket::SocketError socketError);
     void handleStateChanged(QAbstractSocket::SocketState socketState);
@@ -149,23 +113,18 @@ private:
     void setSystemBufferSizes();
     Connection* findOrCreateConnection(const HifiSockAddr& sockAddr, bool filterCreation = false);
     bool socketMatchesNodeOrDomain(const HifiSockAddr& sockAddr);
-
+   
     // privatized methods used by UDTTest - they are private since they must be called on the Socket thread
     ConnectionStats::Stats sampleStatsForConnection(const HifiSockAddr& destination);
-
+    
     std::vector<HifiSockAddr> getConnectionSockAddrs();
     void connectToSendSignal(const HifiSockAddr& destinationAddr, QObject* receiver, const char* slot);
-
+    
     Q_INVOKABLE void writeReliablePacket(Packet* packet, const HifiSockAddr& sockAddr);
     Q_INVOKABLE void writeReliablePacketList(PacketList* packetList, const HifiSockAddr& sockAddr);
     Q_INVOKABLE void writeReliablePacketLists(NLPacketListVector* packetLists, const HifiSockAddr& sockAddr);
 
-#ifdef Q_OS_WIN
-    SOCKET _sockFD { INVALID_SOCKET };
-#else
-    int _sockFD { -1 };
-#endif
-    uint16_t _localPort;
+    QUdpSocket _udpSocket { this };
 
     PacketFilterOperator _packetFilterOperator;
     PacketHandler _packetHandler;
@@ -179,6 +138,8 @@ private:
     std::unordered_map<HifiSockAddr, SequenceNumber> _unreliableSequenceNumbers;
     std::unordered_map<HifiSockAddr, std::unique_ptr<Connection>> _connectionsHash;
 
+    QTimer* _readyReadBackupTimer { nullptr };
+
     int _maxBandwidth { -1 };
 
     std::unique_ptr<CongestionControlVirtualFactory> _ccFactory { new CongestionControlFactory<TCPVegasCC>() };
@@ -188,15 +149,10 @@ private:
     int _lastPacketSizeRead { 0 };
     SequenceNumber _lastReceivedSequenceNumber;
     HifiSockAddr _lastPacketSockAddr;
-
-    tbb::concurrent_queue<Datagram> _incomingDatagrams;
-    std::atomic_bool _waitingForPackets { true };
-
-    DatagramReceiver _datagramReceiver;
     
     friend UDTTest;
 };
-
+    
 } // namespace udt
 
 #endif // hifi_Socket_h

@@ -76,6 +76,7 @@ int AvatarMixerSlave::sendIdentityPacket(const AvatarMixerClientData* nodeData, 
         auto identityPackets = NLPacketList::create(PacketType::AvatarIdentity, QByteArray(), true, true);
         identityPackets->write(individualData);
 
+        identityPackets->closeCurrentPacket();
         queuedPacketLists.push_back(std::move(identityPackets));
 
         _stats.numIdentityPackets++;
@@ -155,6 +156,7 @@ qint64 AvatarMixerSlave::addChangedTraitsToBulkPacket(AvatarMixerClientData* lis
                                                    });
 
                 if (!isDeleted && (sentInstanceIt == sentIDValuePairs.end() || receivedVersion > sentInstanceIt->value)) {
+
                     // this instance version exists and has never been sent or is newer so we need to send it
                     bytesWritten += sendingAvatar->packTraitInstance(traitType, instanceID, traitsPacketList, receivedVersion);
 
@@ -164,6 +166,7 @@ qint64 AvatarMixerSlave::addChangedTraitsToBulkPacket(AvatarMixerClientData* lis
                         sentIDValuePairs.emplace_back(instanceID, receivedVersion);
                     }
                 } else if (isDeleted && sentInstanceIt != sentIDValuePairs.end() && absoluteReceivedVersion > sentInstanceIt->value) {
+
                     // this instance version was deleted and we haven't sent the delete to this client yet
                     bytesWritten += AvatarTraits::packInstancedTraitDelete(traitType, instanceID, traitsPacketList, absoluteReceivedVersion);
 
@@ -182,6 +185,7 @@ qint64 AvatarMixerSlave::addChangedTraitsToBulkPacket(AvatarMixerClientData* lis
         // to match the time of last traits change
         listeningNodeData->setLastOtherAvatarTraitsSendPoint(otherNodeLocalID, timeOfLastTraitsChange);
     }
+
 
     return bytesWritten;
 }
@@ -365,7 +369,7 @@ void AvatarMixerSlave::broadcastAvatarDataToAgent(const SharedNodePointer& node)
 
             // FIXME - This code does appear to be working. But it seems brittle.
             //         It supports determining if the frame of data for this "other"
-            //         avatar has already been sent to the receiver. This has been
+            //         avatar has already been sent to the reciever. This has been
             //         verified to work on a desktop display that renders at 60hz and
             //         therefore sends to mixer at 30hz. Each second you'd expect to
             //         have 15 (45hz-30hz) duplicate frames. In this case, the stat
@@ -501,8 +505,8 @@ void AvatarMixerSlave::broadcastAvatarDataToAgent(const SharedNodePointer& node)
     }
 
     if (nodeData->getNumAvatarsSentLastFrame() > numToSendEst) {
-        qCWarning(avatars) << "More avatars sent than upper estimate" << nodeData->getNumAvatarsSentLastFrame()
-            << " / " << numToSendEst;
+//        qCWarning(avatars) << "More avatars sent than upper estimate" << nodeData->getNumAvatarsSentLastFrame()
+//            << " / " << numToSendEst;
     }
 
     quint64 startPacketSending = usecTimestampNow();
@@ -522,6 +526,7 @@ void AvatarMixerSlave::broadcastAvatarDataToAgent(const SharedNodePointer& node)
     traitsPacketList->closeCurrentPacket();
 
     if (traitsPacketList->getNumPackets() >= 1) {
+        traitsPacketList->closeCurrentPacket();
         queuedPacketLists->push_back(std::move(traitsPacketList));
     }
 
@@ -617,14 +622,14 @@ void AvatarMixerSlave::broadcastAvatarDataToDownstreamMixer(const SharedNodePoin
             }
 
             if (avatarByteArray.size() <= maxAvatarByteArraySize) {
-                // increment the number of avatars sent to this receiver
+                // increment the number of avatars sent to this reciever
                 nodeData->incrementNumAvatarsSentLastFrame();
 
                 // set the last sent sequence number for this sender on the receiver
                 nodeData->setLastBroadcastSequenceNumber(agentNode->getLocalID(),
                                                          agentNodeData->getLastReceivedSequenceNumber());
 
-                // increment the number of avatars sent to this receiver
+                // increment the number of avatars sent to this reciever
                 nodeData->incrementNumAvatarsSentLastFrame();
 
                 // start a new segment in the packet list for this avatar
