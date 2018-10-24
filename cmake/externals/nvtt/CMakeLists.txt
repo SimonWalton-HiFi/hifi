@@ -8,8 +8,8 @@ string(TOUPPER ${EXTERNAL_NAME} EXTERNAL_NAME_UPPER)
 if (WIN32)
   ExternalProject_Add(
     ${EXTERNAL_NAME}
-    URL https://public.highfidelity.com/dependencies/nvtt-win-2.1.0.hifi.zip
-    URL_MD5 10da01cf601f88f6dc12a6bc13c89136
+    URL https://public.highfidelity.com/dependencies/nvtt-win-2.1.1.hifi.zip
+    URL_MD5 7a832092ecb9bf7e960302b3c3e16752
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
     INSTALL_COMMAND ""
