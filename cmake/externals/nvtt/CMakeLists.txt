@@ -29,8 +29,8 @@ else ()
   
   ExternalProject_Add(
     ${EXTERNAL_NAME}
-    URL https://public.highfidelity.com/dependencies/nvidia-texture-tools-2.1.0.hifi-83462e4.zip
-    URL_MD5 602776e08515b54bfa1b8dc455003f0f
+    URL https://public.highfidelity.com/dependencies/nvidia-texture-tools-2.1.1.hifi.zip
+    URL_MD5 c3739f26fb5209573987e721c6e4ecaf
     CONFIGURE_COMMAND CMAKE_ARGS  ${ANDROID_CMAKE_ARGS} -DNVTT_SHARED=1 -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DCMAKE_POSITION_INDEPENDENT_CODE=ON
     LOG_DOWNLOAD 1
     LOG_CONFIGURE 1
