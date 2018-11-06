@@ -460,6 +460,7 @@ void AvatarMixerSlave::broadcastAvatarDataToAgent(const SharedNodePointer& node)
         AvatarDataPacket::SendStatus sendStatus;
         sendStatus.sendUUID = true;
 
+        detail = AvatarData::SendAllData;
         do {
             auto startSerialize = chrono::high_resolution_clock::now();
             QByteArray bytes = otherAvatar->toByteArray(detail, lastEncodeForOther, lastSentJointsForOther,

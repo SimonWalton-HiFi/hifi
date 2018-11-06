@@ -1940,8 +1940,10 @@ void Rig::copyJointsIntoJointData(QVector<JointData>& jointDataVec) const {
             // translations are in relative frame but scaled so that they are in meters,
             // instead of geometry units.
             glm::vec3 defaultRelTrans = _geometryOffset.scale() * _animSkeleton->getRelativeDefaultPose(i).trans();
-            data.translation = _geometryOffset.scale() * (!_sendNetworkNode ? _internalPoseSet._relativePoses[i].trans() : _networkPoseSet._relativePoses[i].trans());
-            data.translationIsDefaultPose = isEqual(data.translation, defaultRelTrans);
+            glm::vec3 translationDelta = ((!_sendNetworkNode ? _internalPoseSet._relativePoses[i].trans() : _networkPoseSet._relativePoses[i].trans())
+                - _animSkeleton->getRelativeDefaultPose(i).trans()) * extractScale(_geometryToRigTransform);
+            data.translation = translationDelta; // _geometryOffset.scale() * (!_sendNetworkNode ? _internalPoseSet._relativePoses[i].trans() : _networkPoseSet._relativePoses[i].trans());
+            data.translationIsDefaultPose = false; // isEqual(data.translation, defaultRelTrans);
         } else {
             data.translationIsDefaultPose = true;
             data.rotationIsDefaultPose = true;
@@ -1991,8 +1993,9 @@ void Rig::copyJointsFromJointData(const QVector<JointData>& jointDataVec) {
         if (data.translationIsDefaultPose) {
             _internalPoseSet._relativePoses[i].trans() = relativeDefaultPoses[i].trans();
         } else {
+            data.translation * extractScale(_rigToGeometryTransform) + relativeDefaultPoses[i].trans();
             // JointData translations are in scaled relative-frame so we scale back to regular relative-frame
-            _internalPoseSet._relativePoses[i].trans() = _invGeometryOffset.scale() * data.translation;
+            //_internalPoseSet._relativePoses[i].trans() = _invGeometryOffset.scale() * data.translation;
         }
     }
 }
