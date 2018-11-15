@@ -85,6 +85,7 @@ public slots:
     void getAllBackupsAndStatus(MiniPromise::Promise promise);
     void createManualBackup(MiniPromise::Promise promise, const QString& name);
     void recoverFromBackup(MiniPromise::Promise promise, const QString& backupName);
+    bool recoverFromBackupZip(const QString& backupName, QuaZip& backupZip);
     void recoverFromUploadedBackup(MiniPromise::Promise promise, QByteArray uploadedBackup);
     void deleteBackup(MiniPromise::Promise promise, const QString& backupName);
 
@@ -107,7 +108,6 @@ protected:
 
     std::pair<bool, QString> createBackup(const QString& prefix, const QString& name);
 
-    bool recoverFromBackupZip(const QString& backupName, QuaZip& backupZip);
 
 private slots:
     void removeOldConsolidatedBackups();

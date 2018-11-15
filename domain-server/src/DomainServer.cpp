@@ -46,6 +46,7 @@
 #include <NumericalConstants.h>
 #include <Trace.h>
 #include <StatTracker.h>
+#include <quazip5/quazip.h>
 
 #include "AssetsBackupHandler.h"
 #include "ContentSettingsBackupHandler.h"
@@ -77,6 +78,51 @@ QUuid DomainServer::_overridingDomainID;
 bool DomainServer::_getTempName { false };
 QString DomainServer::_userConfigFilename;
 int DomainServer::_parentPID { -1 };
+
+namespace {
+    class Buffer64 : public QIODevice {
+    public:
+        using VecBytes = std::vector<char>;
+        Buffer64(VecBytes&& buffer);
+        virtual bool open(OpenMode mode) override {
+            if (mode != ReadOnly) {
+                return false;
+            } else {
+                return QIODevice::open(mode);
+            }
+        }
+
+    protected:
+        virtual qint64 readData(char* data, qint64 maxSize) override;
+        virtual qint64 writeData(const char*, qint64) override {
+            return -1;
+        };
+        virtual qint64 size() const override {
+            return (qint64)_bytes.size();
+        }
+        virtual bool seek(qint64 pos) override {
+            _position = pos;
+            return QIODevice::seek(pos);
+        }
+
+    private:
+        VecBytes _bytes;
+        size_t _position { 0 };
+    };
+
+    Buffer64::Buffer64(VecBytes&& buffer) :
+        _bytes(buffer) { }
+
+    qint64 Buffer64::readData(char * data, qint64 maxSize) {
+        if (_position >= _bytes.size()) {
+            return -1;
+        }
+        size_t sizeRead = std::min((size_t)maxSize, _bytes.size() - _position);
+        memcpy(data, &_bytes[_position], sizeRead);
+        _position += sizeRead;
+        return sizeRead;
+    }
+}
 
 bool DomainServer::forwardMetaverseAPIRequest(HTTPConnection* connection,
                                               const QString& metaversePath,
@@ -2268,7 +2314,10 @@ bool DomainServer::handleHTTPRequest(HTTPConnection* connection, const QUrl& url
                     uploadedFilename = formDataFieldsRegex.cap(2);
                 }
 
-                _pendingUploadedContent += firstFormData.second;
+                const auto& contentChunk = formData[0].second;
+                _pendingUploadedContent.insert(_pendingUploadedContent.end(), contentChunk.data(),
+                    contentChunk.data() + contentChunk.length());
+
                 if (formItemName == "restore-file-chunk") {
                     // Received another chunk
                     connection->respond(HTTPConnection::StatusCode200);
@@ -2532,7 +2581,7 @@ void DomainServer::readPendingContent(HTTPConnection* connection, QString filena
         || filename.endsWith(".json.gz", Qt::CaseInsensitive)) {
         // invoke our method to hand the new octree file off to the octree server
         QMetaObject::invokeMethod(this, "handleOctreeFileReplacement",
-            Qt::QueuedConnection, Q_ARG(QByteArray, _pendingUploadedContent));
+            Qt::QueuedConnection, Q_ARG(std::vector<char>, _pendingUploadedContent));
 
         // respond with a 200 for success
         connection->respond(HTTPConnection::StatusCode200);
@@ -2556,7 +2605,19 @@ void DomainServer::readPendingContent(HTTPConnection* connection, QString filena
             _pendingUploadedContent.clear();
         });
 
-        _contentManager->recoverFromUploadedBackup(deferred, _pendingUploadedContent);
+        Buffer64 zippedContent(std::move(_pendingUploadedContent));
+        QuaZip uploadedZip(&zippedContent);
+        _contentManager->recoverFromBackupZip("UploadedContent", uploadedZip);
+        {
+            QJsonObject rootJSON;
+            auto success = true;
+            rootJSON["success"] = success;
+            QJsonDocument docJSON(rootJSON);
+            connectionPtr->respond(success ? HTTPConnection::StatusCode200 : HTTPConnection::StatusCode400, docJSON.toJson(),
+                JSON_MIME_TYPE.toUtf8());
+            _pendingUploadedContent.clear();
+
+        }
     }
 }
 

@@ -283,7 +283,7 @@ private:
 
     QHash<QUuid, QPointer<HTTPSConnection>> _pendingOAuthConnections;
 
-    QByteArray _pendingUploadedContent;
+    std::vector<char> _pendingUploadedContent;
 
     QThread _assetClientThread;
 };
