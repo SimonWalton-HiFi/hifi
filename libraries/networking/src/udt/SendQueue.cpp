@@ -512,10 +512,6 @@ bool SendQueue::isInactive(bool attemptedToSendPacket) {
                 // Clamp timeout beween 10 ms (optionally) and 5 s
                 {
                     estimatedTimeout = std::min(MAXIMUM_ESTIMATED_TIMEOUT, estimatedTimeout);
-                    // We have _naks lock.
-                    if (_naks.getLength() >= PENDING_RETRANSMITS_FOR_MINIMUM) {
-                        estimatedTimeout = std::max(MINIMUM_ESTIMATED_TIMEOUT, estimatedTimeout);
-                    }
                 }
 
                 // use our condition_variable_any to wait

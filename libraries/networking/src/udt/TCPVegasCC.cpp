@@ -85,6 +85,9 @@ bool TCPVegasCC::onACK(SequenceNumber ack, p_high_resolution_clock::time_point r
     _lastACK = ack;
 
     bool wasDuplicateACK = (ack == previousAck);
+    if (ack > previousAck) {
+        _possibleCongestion = false;
+    }
 
     auto it = std::find_if(_sentPacketDatas.begin(), _sentPacketDatas.end(), [ack](SentPacketData& packetTime){
         return packetTime.sequenceNumber == ack;
@@ -170,6 +173,7 @@ bool TCPVegasCC::needsFastRetransmit(SequenceNumber ack, bool wasDuplicateACK) {
         // reset our fast re-transmit counters
         _numACKSinceFastRetransmit = 0;
         _duplicateACKCount = 0;
+        _possibleCongestion = true;
 
         // return true so the caller knows we needed a fast re-transmit
         return true;
@@ -251,7 +255,7 @@ void TCPVegasCC::performCongestionAvoidance(udt::SequenceNumber ack) {
 
 
 int TCPVegasCC::estimatedTimeout() const {
-    return _ewmaRTT == -1 ? DEFAULT_SYN_INTERVAL : _ewmaRTT + _rttVariance * 4;
+    return (_ewmaRTT == -1 || _possibleCongestion) ? DEFAULT_SYN_INTERVAL : _ewmaRTT + _rttVariance * 4;
 }
 
 bool TCPVegasCC::isCongestionWindowLimited() {
