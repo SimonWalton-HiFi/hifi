@@ -143,7 +143,7 @@ private:
 
     static const std::chrono::microseconds MAXIMUM_ESTIMATED_TIMEOUT;
     static const std::chrono::microseconds MINIMUM_ESTIMATED_TIMEOUT;
-    static const int PENDING_SENT_FOR_MINIMUM;
+    static const int PENDING_RETRANSMITS_FOR_MINIMUM;
 };
     
 }

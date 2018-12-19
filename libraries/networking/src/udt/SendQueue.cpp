@@ -63,7 +63,7 @@ private:
 
 const microseconds SendQueue::MAXIMUM_ESTIMATED_TIMEOUT = seconds(5);
 const microseconds SendQueue::MINIMUM_ESTIMATED_TIMEOUT = milliseconds(10);
-const int SendQueue::PENDING_SENT_FOR_MINIMUM = 6;
+const int SendQueue::PENDING_RETRANSMITS_FOR_MINIMUM = 3;
 
 std::unique_ptr<SendQueue> SendQueue::create(Socket* socket, HifiSockAddr destination, SequenceNumber currentSequenceNumber,
                                              MessageNumber currentMessageNumber, bool hasReceivedHandshakeACK) {
@@ -511,9 +511,9 @@ bool SendQueue::isInactive(bool attemptedToSendPacket) {
 
                 // Clamp timeout beween 10 ms (optionally) and 5 s
                 {
-                    QReadLocker sentLocker(&_sentLock);
                     estimatedTimeout = std::min(MAXIMUM_ESTIMATED_TIMEOUT, estimatedTimeout);
-                    if (_sentPackets.size() >= PENDING_SENT_FOR_MINIMUM) {
+                    // We have _naks lock.
+                    if (_naks.getLength() >= PENDING_RETRANSMITS_FOR_MINIMUM) {
                         estimatedTimeout = std::max(MINIMUM_ESTIMATED_TIMEOUT, estimatedTimeout);
                     }
                 }
