@@ -63,7 +63,7 @@ private:
 
 const microseconds SendQueue::MAXIMUM_ESTIMATED_TIMEOUT = seconds(5);
 const microseconds SendQueue::MINIMUM_ESTIMATED_TIMEOUT = milliseconds(10);
-const int SendQueue::PENDING_SENT_FOR_MINIMUM = 20;
+const int SendQueue::PENDING_SENT_FOR_MINIMUM = 6;
 
 std::unique_ptr<SendQueue> SendQueue::create(Socket* socket, HifiSockAddr destination, SequenceNumber currentSequenceNumber,
                                              MessageNumber currentMessageNumber, bool hasReceivedHandshakeACK) {
