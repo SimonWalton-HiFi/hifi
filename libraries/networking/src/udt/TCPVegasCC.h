@@ -68,6 +68,7 @@ private:
     int _currentMinRTT; // Current min RTT during last RTT (since last congestion avoidance check), in microseconds
     int _baseRTT; // Lowest RTT during connection, in microseconds
     int _ewmaRTT { -1 }; // Exponential weighted moving average RTT
+    int _effectiveRTT { 0 }; // Backoff during packet loss
     int _rttVariance { 0 }; // Variance in collected RTT values
 
     int _numRTTs { 0 }; // Number of RTTs calculated during the last RTT (since last performed congestion avoidance)
