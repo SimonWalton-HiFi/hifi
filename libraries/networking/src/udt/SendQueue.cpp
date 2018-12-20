@@ -62,8 +62,6 @@ private:
 };
 
 const microseconds SendQueue::MAXIMUM_ESTIMATED_TIMEOUT = seconds(5);
-const microseconds SendQueue::MINIMUM_ESTIMATED_TIMEOUT = milliseconds(10);
-const int SendQueue::PENDING_RETRANSMITS_FOR_MINIMUM = 3;
 
 std::unique_ptr<SendQueue> SendQueue::create(Socket* socket, HifiSockAddr destination, SequenceNumber currentSequenceNumber,
                                              MessageNumber currentMessageNumber, bool hasReceivedHandshakeACK) {
@@ -509,10 +507,8 @@ bool SendQueue::isInactive(bool attemptedToSendPacket) {
 
                 auto estimatedTimeout = std::chrono::microseconds(_estimatedTimeout);
 
-                // Clamp timeout beween 10 ms (optionally) and 5 s
-                {
-                    estimatedTimeout = std::min(MAXIMUM_ESTIMATED_TIMEOUT, estimatedTimeout);
-                }
+                // Limit timeout to 5 s
+                estimatedTimeout = std::min(MAXIMUM_ESTIMATED_TIMEOUT, estimatedTimeout);
 
                 // use our condition_variable_any to wait
                 auto cvStatus = _emptyCondition.wait_for(locker, estimatedTimeout);
