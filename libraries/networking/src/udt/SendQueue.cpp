@@ -34,6 +34,8 @@
 
 #include "../NetworkLogging.h"
 
+#define UDT_CONNECTION_DEBUG
+
 using namespace udt;
 using namespace std::chrono;
 
@@ -192,6 +194,10 @@ void SendQueue::sendHandshake() {
         // we wait for the ACK or the re-send interval to expire
         static const auto HANDSHAKE_RESEND_INTERVAL = std::chrono::milliseconds(100);
         _handshakeACKCondition.wait_for(handshakeLock, HANDSHAKE_RESEND_INTERVAL);
+#ifdef UDT_CONNECTION_DEBUG
+        qCDebug(networking) << "Sending Handshake, port" << _destination.getPort();
+#endif
+
     }
 }
 

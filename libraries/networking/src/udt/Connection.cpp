@@ -27,6 +27,8 @@
 #include "Socket.h"
 #include <Trace.h>
 
+#define UDT_CONNECTION_DEBUG
+
 using namespace udt;
 using namespace std::chrono;
 
@@ -245,7 +247,7 @@ bool Connection::processReceivedSequenceNumber(SequenceNumber sequenceNumber, in
         // Send handshake request to re-request a handshake
 
 #ifdef UDT_CONNECTION_DEBUG
-        qCDebug(networking) << "Received packet before receiving handshake, sending HandshakeRequest";
+        qCDebug(networking) << "Received packet before receiving handshake, sending HandshakeRequest, port" << _destination.getPort();
 #endif
 
         sendHandshakeRequest();
@@ -363,7 +365,11 @@ void Connection::processACK(ControlPacketPointer controlPacket) {
 void Connection::processHandshake(ControlPacketPointer controlPacket) {
     SequenceNumber initialSequenceNumber;
     controlPacket->readPrimitive(&initialSequenceNumber);
-    
+
+#ifdef UDT_CONNECTION_DEBUG
+    qCDebug(networking) << "Received handshake, port" << _destination.getPort();
+#endif
+
     if (!_hasReceivedHandshake || initialSequenceNumber != _initialReceiveSequenceNumber) {
         // server sent us a handshake - we need to assume this means state should be reset
         // as long as we haven't received a handshake yet or we have and we've received some data
@@ -396,6 +402,13 @@ void Connection::processHandshakeACK(ControlPacketPointer controlPacket) {
     if (_sendQueue) {
         SequenceNumber initialSequenceNumber;
         controlPacket->readPrimitive(&initialSequenceNumber);
+
+#ifdef UDT_CONNECTION_DEBUG
+        qCDebug(networking) << "Received handshake ACK, port" << _destination.getPort();
+        if (initialSequenceNumber != _initialReceiveSequenceNumber) {
+            qCDebug(networking) << "Incorrect ISN in handshake ACK";
+        }
+#endif
 
         if (initialSequenceNumber == _initialSequenceNumber) {
             // hand off this handshake ACK to the send queue so it knows it can start sending
