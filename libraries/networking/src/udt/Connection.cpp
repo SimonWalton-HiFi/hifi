@@ -407,7 +407,7 @@ void Connection::processHandshakeACK(ControlPacketPointer controlPacket) {
 
 #ifdef UDT_CONNECTION_DEBUG
         qCDebug(networking) << "Received handshake ACK, port" << _destination.getPort();
-        if (initialSequenceNumber != _initialReceiveSequenceNumber) {
+        if (initialSequenceNumber != _initialSequenceNumber) {
             qCDebug(networking) << "Incorrect ISN in handshake ACK";
         }
 #endif
