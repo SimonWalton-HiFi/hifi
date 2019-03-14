@@ -211,6 +211,19 @@ void SendQueue::handshakeACK() {
     _handshakeACKCondition.notify_one();
 }
 
+void SendQueue::clearHandshakeACK() {
+    std::lock_guard<std::mutex> locker { _handshakeMutex };
+    QWriteLocker packetListLocker(&_sentLock);
+
+    // Recycle any outstanding packets.
+    for (auto& packetIter : _sentPackets) {
+        _packets.queuePacket(std::move(packetIter.second.second));
+    }
+
+    _sentPackets.clear();
+    _hasReceivedHandshakeACK = false;
+}
+
 SequenceNumber SendQueue::getNextSequenceNumber() {
     _atomicCurrentSequenceNumber = (SequenceNumber::Type)++_currentSequenceNumber;
     return _currentSequenceNumber;
@@ -269,23 +282,24 @@ void SendQueue::run() {
     
     _state = State::Running;
     
-    // Wait for handshake to be complete
-    while (_state == State::Running && !_hasReceivedHandshakeACK) {
-        sendHandshake();
-
-        // Keep processing events
-        QCoreApplication::sendPostedEvents(this);
-        
-        // Once we're here we've either received the handshake ACK or it's going to be time to re-send a handshake.
-        // Either way let's continue processing - no packets will be sent if no handshake ACK has been received.
-    }
-
     // Keep an HRC to know when the next packet should have been
     auto nextPacketTimestamp = p_high_resolution_clock::now();
 
     while (_state == State::Running) {
+        // Wait for handshake to be complete
+        while (_state == State::Running && !_hasReceivedHandshakeACK) {
+            sendHandshake();
+
+            // Keep processing events
+            QCoreApplication::sendPostedEvents(this);
+
+            nextPacketTimestamp = p_high_resolution_clock::now();
+            // Once we're here we've either received the handshake ACK or it's going to be time to re-send a handshake.
+            // Either way let's continue processing - no packets will be sent if no handshake ACK has been received.
+        }
+
         bool attemptedToSendPacket = maybeResendPacket();
-        
+
         // if we didn't find a packet to re-send AND we think we can fit a new packet on the wire
         // (this is according to the current flow window size) then we send out a new packet
         auto newPacketCount = 0;

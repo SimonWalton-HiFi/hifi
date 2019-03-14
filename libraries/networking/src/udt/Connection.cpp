@@ -116,6 +116,7 @@ SendQueue& Connection::getSendQueue() {
         QObject::connect(_sendQueue.get(), &SendQueue::packetRetransmitted, this, &Connection::recordRetransmission);
         QObject::connect(_sendQueue.get(), &SendQueue::queueInactive, this, &Connection::queueInactive);
         QObject::connect(_sendQueue.get(), &SendQueue::timeout, this, &Connection::queueTimeout);
+        QObject::connect(_sendQueue.get(), &SendQueue::clearHandshakeACK, this, &Connection::clearHandshakeACK);
 
         
         // set defaults on the send queue from our congestion control object and estimatedTimeout()
@@ -270,7 +271,7 @@ bool Connection::processReceivedSequenceNumber(SequenceNumber sequenceNumber, in
     bool wasDuplicate = false;
     
     if (sequenceNumber > _lastReceivedSequenceNumber) {
-        // Update largest recieved sequence number
+        // Update largest received sequence number
         _lastReceivedSequenceNumber = sequenceNumber;
     } else {
         // Otherwise, it could be a resend, try and remove it from the loss list
@@ -317,7 +318,8 @@ void Connection::processControl(ControlPacketPointer controlPacket) {
                 qCDebug(networking) << "Got HandshakeRequest from" << _destination << ", stopping SendQueue";
 #endif
                 _hasReceivedHandshakeACK = false;
-                stopSendQueue();
+                //stopSendQueue();
+                emit clearHandshakeACK();
             }
             break;
     }
@@ -334,7 +336,7 @@ void Connection::processACK(ControlPacketPointer controlPacket) {
     // validate that this isn't a BS ACK
     if (ack > getSendQueue().getCurrentSequenceNumber()) {
         // in UDT they specifically break the connection here - do we want to do anything?
-        Q_ASSERT_X(false, "Connection::processACK", "ACK recieved higher than largest sent sequence number");
+        Q_ASSERT_X(false, "Connection::processACK", "ACK received higher than largest sent sequence number");
         return;
     }
     
