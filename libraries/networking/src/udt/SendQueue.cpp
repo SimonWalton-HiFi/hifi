@@ -192,6 +192,10 @@ void SendQueue::sendHandshake() {
         // we wait for the ACK or the re-send interval to expire
         static const auto HANDSHAKE_RESEND_INTERVAL = std::chrono::milliseconds(100);
         _handshakeACKCondition.wait_for(handshakeLock, HANDSHAKE_RESEND_INTERVAL);
+
+#ifdef UDT_CONNECTION_DEBUG
+        qCDebug(networking) << "Sending Handshake, port" << _destination.getPort();
+#endif
     }
 }
 
@@ -203,6 +207,19 @@ void SendQueue::handshakeACK() {
 
     // Notify on the handshake ACK condition
     _handshakeACKCondition.notify_one();
+}
+
+void SendQueue::clearHandshakeACK() {
+    std::lock_guard<std::mutex> locker { _handshakeMutex };
+    QWriteLocker packetListLocker(&_sentLock);
+
+    // Recycle any outstanding packets.
+    for (auto& packetIter : _sentPackets) {
+        _packets.queuePacket(std::move(packetIter.second.second));
+    }
+
+    _sentPackets.clear();
+    _hasReceivedHandshakeACK = false;
 }
 
 SequenceNumber SendQueue::getNextSequenceNumber() {

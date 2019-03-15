@@ -80,6 +80,8 @@ public:
 signals:
     void packetSent();
     void receiverHandshakeRequestComplete(const HifiSockAddr& sockAddr);
+    void clearHandshakeACK();
+
 
 private slots:
     void recordSentPackets(int wireSize, int payloadSize, SequenceNumber seqNum, p_high_resolution_clock::time_point timePoint);
