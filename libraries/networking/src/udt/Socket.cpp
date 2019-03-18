@@ -29,6 +29,8 @@
 #include "PacketList.h"
 #include <Trace.h>
 
+#define UDT_CONNECTION_DEBUG
+
 using namespace udt;
 
 Socket::Socket(QObject* parent, bool shouldChangeSocketOptions) :
@@ -200,7 +202,7 @@ void Socket::writeReliablePacket(Packet* packet, const HifiSockAddr& sockAddr) {
     }
 #ifdef UDT_CONNECTION_DEBUG
     else {
-        qCDebug(networking) << "Socket::writeReliablePacket refusing to send packet - no connection was created";
+        qCDebug(networking) << "Socket::writeReliablePacket refusing to send packet - no connection was created:" << sockAddr;
     }
 #endif
 
@@ -213,7 +215,7 @@ void Socket::writeReliablePacketList(PacketList* packetList, const HifiSockAddr&
     }
 #ifdef UDT_CONNECTION_DEBUG
     else {
-        qCDebug(networking) << "Socket::writeReliablePacketList refusing to send packet list - no connection was created";
+        qCDebug(networking) << "Socket::writeReliablePacketList refusing to send packet list - no connection was created:" << sockAddr;
     }
 #endif
 }

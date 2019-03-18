@@ -27,6 +27,8 @@
 #include "Socket.h"
 #include <Trace.h>
 
+#define UDT_CONNECTION_DEBUG
+
 using namespace udt;
 using namespace std::chrono;
 
@@ -316,7 +318,6 @@ void Connection::processControl(ControlPacketPointer controlPacket) {
                 qCDebug(networking) << "Got HandshakeRequest from" << _destination << ", stopping SendQueue";
 #endif
                 _hasReceivedHandshakeACK = false;
-                //stopSendQueue();
                 emit clearHandshakeACK();
 
             }

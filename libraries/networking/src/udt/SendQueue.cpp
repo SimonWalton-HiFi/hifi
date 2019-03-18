@@ -34,6 +34,8 @@
 
 #include "../NetworkLogging.h"
 
+#define UDT_CONNECTION_DEBUG
+
 using namespace udt;
 using namespace std::chrono;
 
@@ -280,21 +282,21 @@ void SendQueue::run() {
     
     _state = State::Running;
     
-    // Wait for handshake to be complete
-    while (_state == State::Running && !_hasReceivedHandshakeACK) {
-        sendHandshake();
-
-        // Keep processing events
-        QCoreApplication::sendPostedEvents(this);
-        
-        // Once we're here we've either received the handshake ACK or it's going to be time to re-send a handshake.
-        // Either way let's continue processing - no packets will be sent if no handshake ACK has been received.
-    }
-
     // Keep an HRC to know when the next packet should have been
     auto nextPacketTimestamp = p_high_resolution_clock::now();
 
     while (_state == State::Running) {
+        // Wait for handshake to be complete
+        while (_state == State::Running && !_hasReceivedHandshakeACK) {
+            sendHandshake();
+
+            // Keep processing events
+            QCoreApplication::sendPostedEvents(this);
+
+            // Once we're here we've either received the handshake ACK or it's going to be time to re-send a handshake.
+            // Either way let's continue processing - no packets will be sent if no handshake ACK has been received.
+        }
+
         bool attemptedToSendPacket = maybeResendPacket();
         
         // if we didn't find a packet to re-send AND we think we can fit a new packet on the wire
