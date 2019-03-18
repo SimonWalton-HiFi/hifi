@@ -29,8 +29,6 @@
 #include "PacketList.h"
 #include <Trace.h>
 
-#define UDT_CONNECTION_DEBUG
-
 using namespace udt;
 
 Socket::Socket(QObject* parent, bool shouldChangeSocketOptions) :

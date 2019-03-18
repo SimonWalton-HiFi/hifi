@@ -116,7 +116,7 @@ SendQueue& Connection::getSendQueue() {
         QObject::connect(_sendQueue.get(), &SendQueue::packetRetransmitted, this, &Connection::recordRetransmission);
         QObject::connect(_sendQueue.get(), &SendQueue::queueInactive, this, &Connection::queueInactive);
         QObject::connect(_sendQueue.get(), &SendQueue::timeout, this, &Connection::queueTimeout);
-        QObject::connect(_sendQueue.get(), &SendQueue::clearHandshakeACK, this, &Connection::clearHandshakeACK);
+        QObject::connect(this, &Connection::clearHandshakeACK, _sendQueue.get(), &SendQueue::clearHandshakeACK);
 
         
         // set defaults on the send queue from our congestion control object and estimatedTimeout()

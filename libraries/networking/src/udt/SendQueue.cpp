@@ -293,6 +293,7 @@ void SendQueue::run() {
             // Keep processing events
             QCoreApplication::sendPostedEvents(this);
 
+            auto nextPacketTimestamp = p_high_resolution_clock::now();
             // Once we're here we've either received the handshake ACK or it's going to be time to re-send a handshake.
             // Either way let's continue processing - no packets will be sent if no handshake ACK has been received.
         }
