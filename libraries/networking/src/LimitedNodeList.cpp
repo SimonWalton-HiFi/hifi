@@ -423,10 +423,11 @@ qint64 LimitedNodeList::sendPacket(std::unique_ptr<NLPacket> packet, const Node&
     Q_ASSERT(!packet->isPartOfMessage());
     auto activeSocket = destinationNode.getActiveSocket();
 
-    if (activeSocket) {
+    if (activeSocket
+        && (!packet->isReliable() || _nodeHash.find(destinationNode.getUUID()) != _nodeHash.end()) ) {
         return sendPacket(std::move(packet), *activeSocket, destinationNode.getAuthenticateHash());
     } else {
-        qCDebug(networking) << "LimitedNodeList::sendPacket called without active socket for node" << destinationNode << "- not sending";
+        qCDebug(networking) << "LimitedNodeList::sendPacket called without active socket or valid node for node" << destinationNode << "- not sending";
         return ERROR_SENDING_PACKET_BYTES;
     }
 }
