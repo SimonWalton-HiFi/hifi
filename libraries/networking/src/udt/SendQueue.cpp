@@ -34,8 +34,6 @@
 
 #include "../NetworkLogging.h"
 
-#define UDT_CONNECTION_DEBUG
-
 using namespace udt;
 using namespace std::chrono;
 
