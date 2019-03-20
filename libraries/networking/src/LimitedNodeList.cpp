@@ -497,7 +497,8 @@ qint64 LimitedNodeList::sendPacketList(std::unique_ptr<NLPacketList> packetList,
 
 qint64 LimitedNodeList::sendPacketList(std::unique_ptr<NLPacketList> packetList, const Node& destinationNode) {
     auto activeSocket = destinationNode.getActiveSocket();
-    if (activeSocket) {
+    if (activeSocket
+        && (!packetList->isReliable() || _nodeHash.find(destinationNode.getUUID()) != _nodeHash.end()) ) {
         // close the last packet in the list
         packetList->closeCurrentPacket();
 
@@ -508,7 +509,7 @@ qint64 LimitedNodeList::sendPacketList(std::unique_ptr<NLPacketList> packetList,
 
         return _nodeSocket.writePacketList(std::move(packetList), *activeSocket);
     } else {
-        qCDebug(networking) << "LimitedNodeList::sendPacketList called without active socket for node "
+        qCDebug(networking) << "LimitedNodeList::sendPacketList called without active socket or valid node for node "
                             << destinationNode.getUUID() << ". Not sending.";
         return ERROR_SENDING_PACKET_BYTES;
     }
