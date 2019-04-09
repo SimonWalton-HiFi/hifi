@@ -27,6 +27,8 @@
 #include "Socket.h"
 #include <Trace.h>
 
+#define UDT_CONNECTION_DEBUG
+
 using namespace udt;
 using namespace std::chrono;
 
