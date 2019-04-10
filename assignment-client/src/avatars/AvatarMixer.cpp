@@ -258,7 +258,6 @@ void AvatarMixer::start() {
             _entityViewer->queryOctree();
         }
 
-#if 0
         // Dirty the hero status if there's been an entity change.
         {
             if (_dirtyHeroStatus) {
@@ -276,7 +275,6 @@ void AvatarMixer::start() {
                 });
             }
         }
-#endif
 
         // Allow nodes to process any pending/queued packets across our worker threads
         {
