@@ -255,7 +255,7 @@ void AvatarMixer::start() {
 
         // Set our query each frame
         {
-            _entityViewer.queryOctree();
+            _entityViewer->queryOctree();
         }
 
         // Dirty the hero status if there's been an entity change.
@@ -1053,8 +1053,8 @@ void AvatarMixer::parseDomainServerSettings(const QJsonObject& domainSettings) {
 }
 
 void AvatarMixer::setupEntityQuery() {
-    _entityViewer.init();
-    EntityTreePointer entityTree = _entityViewer.getTree();
+    _entityViewer->init();
+    EntityTreePointer entityTree = _entityViewer->getTree();
     DependencyManager::registerInheritance<SpatialParentFinder, AssignmentParentFinder>();
     DependencyManager::set<AssignmentParentFinder>(entityTree);
 
@@ -1066,7 +1066,7 @@ void AvatarMixer::setupEntityQuery() {
     priorityZoneQuery["avatarPriority"] = true;
     priorityZoneQuery["type"] = "Zone";
 
-    _entityViewer.getOctreeQuery().setJSONParameters(priorityZoneQuery);
+    _entityViewer->getOctreeQuery().setJSONParameters(priorityZoneQuery);
     _slaveSharedData.entityTree = entityTree;
 }
 
@@ -1091,11 +1091,11 @@ void AvatarMixer::handleOctreePacket(QSharedPointer<ReceivedMessage> message, Sh
     }
 
     case PacketType::EntityData:
-        _entityViewer.processDatagram(*message, senderNode);
+        _entityViewer->processDatagram(*message, senderNode);
         break;
 
     case PacketType::EntityErase:
-        _entityViewer.processEraseMessage(*message, senderNode);
+        _entityViewer->processEraseMessage(*message, senderNode);
         break;
 
     default:
@@ -1124,6 +1124,8 @@ void AvatarMixer::entityChange() {
 }
 
 void AvatarMixer::aboutToFinish() {
+    _entityViewer.reset();
+    _slaveSharedData.entityTree.reset();
     DependencyManager::destroy<ResourceManager>();
     DependencyManager::destroy<ResourceCacheSharedItems>();
     DependencyManager::destroy<ModelCache>();

@@ -247,7 +247,7 @@ bool Connection::processReceivedSequenceNumber(SequenceNumber sequenceNumber, in
         // Send handshake request to re-request a handshake
 
 #ifdef UDT_CONNECTION_DEBUG
-        qCDebug(networking) << "Received packet before receiving handshake, sending HandshakeRequest";
+        qCDebug(networking) << "Received packet before receiving handshake, sending HandshakeRequest:" << _destination;
 #endif
 
         sendHandshakeRequest();
@@ -402,7 +402,9 @@ void Connection::processHandshakeACK(ControlPacketPointer controlPacket) {
         if (initialSequenceNumber == _initialSequenceNumber) {
             // hand off this handshake ACK to the send queue so it knows it can start sending
             getSendQueue().handshakeACK();
-
+#ifdef UDT_CONNECTION_DEBUG
+            qCDebug(networking) << "Received HandshakeACK from" << _destination;
+#endif
             // indicate that handshake ACK was received
             _hasReceivedHandshakeACK = true;
         }
