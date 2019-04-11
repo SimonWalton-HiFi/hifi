@@ -588,6 +588,8 @@ void LimitedNodeList::eraseAllNodes() {
     foreach(const SharedNodePointer& killedNode, killedNodes) {
         handleNodeKill(killedNode);
     }
+
+    _delayedNodeAdds.clear();
 }
 
 void LimitedNodeList::reset() {
@@ -752,7 +754,7 @@ void LimitedNodeList::delayNodeAdd(NewNodeInfo info) {
 }
 
 void LimitedNodeList::removeDelayedAdd(QUuid nodeUUID) {
-    auto it = std::find_if(_delayedNodeAdds.begin(), _delayedNodeAdds.end(), [&](auto info) {
+    auto it = std::find_if(_delayedNodeAdds.begin(), _delayedNodeAdds.end(), [&](const auto& info) {
         return info.uuid == nodeUUID;
     });
     if (it != _delayedNodeAdds.end()) {
@@ -761,7 +763,7 @@ void LimitedNodeList::removeDelayedAdd(QUuid nodeUUID) {
 }
 
 bool LimitedNodeList::isDelayedNode(QUuid nodeUUID) {
-    auto it = std::find_if(_delayedNodeAdds.begin(), _delayedNodeAdds.end(), [&](auto info) {
+    auto it = std::find_if(_delayedNodeAdds.begin(), _delayedNodeAdds.end(), [&](const auto& info) {
         return info.uuid == nodeUUID;
     });
     return it != _delayedNodeAdds.end();
