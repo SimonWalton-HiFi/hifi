@@ -62,7 +62,7 @@ private:
     QTimer _challengeTimer;
     int _numberChallenges { 0 };
     static constexpr int CHALLENGE_TIMEOUT_MS = 8 * 1000;  // 8 s
-    static constexpr int MAX_NUM_CHALLENGES = 2;
+    static constexpr int MAX_NUM_CHALLENGES = 1;
     bool _needsIdentityUpdate { false };
 
     bool generateFSTHash();

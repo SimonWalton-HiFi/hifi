@@ -545,10 +545,12 @@ void Socket::handleStateChanged(QAbstractSocket::SocketState socketState) {
 
 void Socket::handleRemoteAddressChange(HifiSockAddr previousAddress, HifiSockAddr currentAddress) {
     {
+        qCDebug(networking) << "handleRemoteAddressChange: " << previousAddress << "to" << currentAddress;
         Lock connectionsLock(_connectionsHashMutex);
 
         const auto connectionIter = _connectionsHash.find(previousAddress);
         if (connectionIter != _connectionsHash.end()) {
+            qCDebug(networking) << "handleRemoteAddressChange: Found" << previousAddress;
             auto connection = move(connectionIter->second);
             _connectionsHash.erase(connectionIter);
             connection->setDestinationAddress(currentAddress);
