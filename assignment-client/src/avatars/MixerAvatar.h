@@ -60,6 +60,8 @@ private:
     QString _ownerPublicKey;
     QByteArray _challengeNonceHash;
     QTimer _challengeTimer;
+    int _numberChallenges { 0 };
+    static constexpr int MAX_NUM_CHALLENGES = 2;
     bool _needsIdentityUpdate { false };
 
     bool generateFSTHash();

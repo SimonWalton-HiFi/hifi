@@ -28,17 +28,23 @@
 #include "AvatarLogging.h"
 
 MixerAvatar::MixerAvatar() {
-    static constexpr int CHALLENGE_TIMEOUT_MS = 10 * 1000;  // 10 s
+    static constexpr int CHALLENGE_TIMEOUT_MS = 8 * 1000;  // 8 s
 
     _challengeTimer.setSingleShot(true);
     _challengeTimer.setInterval(CHALLENGE_TIMEOUT_MS);
     
     _challengeTimer.callOnTimeout(this, [this]() {
         if (_verifyState == challengeClient) {
-            _pendingEvent = false;
-            _verifyState = verificationFailed;
-            _needsIdentityUpdate = true;
-            qCDebug(avatars) << "Dynamic verification TIMED-OUT for " << getDisplayName() << getSessionUUID();
+            if (++_numberChallenges < MAX_NUM_CHALLENGES) {
+                sendOwnerChallenge();
+                qCDebug(avatars) << "Resending (" << _numberChallenges << ") timed-out challenge for" << getDisplayName()
+                    << getSessionUUID();
+            } else {
+                _pendingEvent = false;
+                _verifyState = verificationFailed;
+                _needsIdentityUpdate = true;
+                qCDebug(avatars) << "Dynamic verification TIMED-OUT for" << getDisplayName() << getSessionUUID();
+            }
         } else {
             qCDebug(avatars) << "Ignoring timeout of avatar challenge";
         }
@@ -279,6 +285,7 @@ void MixerAvatar::processCertifyEvents() {
                             + ownerPublicKey
                             + "\n-----END PUBLIC KEY-----\n";
                     }
+                    _numberChallenges = 0;
                     sendOwnerChallenge();
                     _verifyState = challengeClient;
                 } else {
