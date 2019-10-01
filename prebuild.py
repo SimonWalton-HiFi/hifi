@@ -20,6 +20,7 @@ import hifi_singleton
 import hifi_utils
 import hifi_android
 import hifi_vcpkg
+import hifi_qt
 
 import argparse
 import concurrent
@@ -119,9 +120,20 @@ def main():
     logger.info('sha=%s' % headSha())
     logger.info('start')
 
+    qtInstallPath = ''
+    # If not android, install our Qt build
+    if not args.android:
+        qt = hifi_qt.QtDownloader(args)
+        qtInstallPath = qt.cmakePath
+        with hifi_singleton.Singleton(qt.lockFile) as lock:
+            with timer('Qt'):
+                qt.installQt()
+                qt.writeConfig()
+
     # Only allow one instance of the program to run at a time
     pm = hifi_vcpkg.VcpkgRepo(args)
     with hifi_singleton.Singleton(pm.lockFile) as lock:
+
         with timer('Bootstraping'):
             if not pm.upToDate():
                 pm.bootstrap()
@@ -135,7 +147,7 @@ def main():
         #  * build host tools, like spirv-cross and scribe
         #  * build client dependencies like openssl and nvtt
         with timer('Setting up dependencies'):
-            pm.setupDependencies()
+            pm.setupDependencies(qt=qtInstallPath)
 
         # wipe out the build directories (after writing the tag, since failure 
         # here shouldn't invalidte the vcpkg install)
