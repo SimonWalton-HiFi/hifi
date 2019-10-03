@@ -25,4 +25,11 @@ jobs:
     - name: build installer
       working-directory: ${{runner.workspace}}/build
       run: cmake --build . --config Release --target package
-
+    - name: install awscli
+      run: pip install awscli
+    - name: upload test
+      working-directory: ${{runner.workspace}}/build
+      env:
+        AWS_ACCESS_KEY_ID: AKIAJOF5R5WQWQL6C7UQ
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
+      run: aws s3 cp highfidelity-beta-interface-dev.exe s3://hifi-public/austin/builds/highfidelity-beta-interface-dev-%GITHUB_SHA%.exe
