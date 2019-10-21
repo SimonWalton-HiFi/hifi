@@ -146,7 +146,7 @@ endif()
         if downloadVcpkg:
             if "HIFI_VCPKG_BOOTSTRAP" in os.environ:
                 print("Cloning vcpkg from github to {}".format(self.path))
-                hifi_utils.executeSubprocess(['git', 'clone', 'git@github.com:microsoft/vcpkg.git', self.path])
+                hifi_utils.executeSubprocess(['git', 'clone', 'https://github.com/microsoft/vcpkg.git', self.path])
                 print("Bootstrapping vcpkg")
                 hifi_utils.executeSubprocess([self.bootstrapCmd], folder=self.path)
             else:
@@ -169,6 +169,12 @@ endif()
         hifi_utils.executeSubprocess(actualCommands, folder=self.path)
 
     def setupDependencies(self):
+        if True:
+            url = "https://hifi-public.s3.amazonaws.com/dependencies/vcpkg/builds/258877bd/258877bd-win32.zip"
+            dest = self.path
+            hifi_utils.downloadAndExtract(url, dest, isZip=True)
+            return
+
         # Special case for android, grab a bunch of binaries
         # FIXME remove special casing for android builds eventually
         if self.args.android:
@@ -182,11 +188,6 @@ endif()
         if not self.args.android:
             print("Installing build dependencies")
             self.run(['install', '--triplet', self.triplet, 'hifi-client-deps'])
-            
-        # If not android, install our Qt build
-        if not self.args.android:
-            print("Installing Qt")
-            self.installQt()
 
     def cleanBuilds(self):
         # Remove temporary build artifacts

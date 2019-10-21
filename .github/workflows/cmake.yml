@@ -1,0 +1,35 @@
+name: CMake CI
+
+on: [push: {paths-ignore: '*'}]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+      with: 
+        submodules: true
+        fetch-depth: 1
+    - name: create-build-dir
+      run: cmake -E make_directory ${{runner.workspace}}/build
+    - name: cmake configure
+      env:
+        HIFI_VCPKG_BOOTSTRAP: true
+      working-directory: ${{runner.workspace}}/build
+      run: cmake %GITHUB_WORKSPACE% -DCLIENT_ONLY:BOOLEAN=TRUE -DBUILD_SERVER=OFF -DBUILD_TESTS=OFF -DBUILD_TOOLS=OFF -A x64 
+    - name: build console
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --config Release --target packaged-server-console
+    - name: build installer
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --config Release --target package
+    - name: install awscli
+      run: pip install awscli
+    - name: upload test
+      working-directory: ${{runner.workspace}}/build
+      env:
+        AWS_ACCESS_KEY_ID: AKIAJOF5R5WQWQL6C7UQ
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
+      run: aws s3 cp highfidelity-beta-interface-dev.exe s3://hifi-public/austin/builds/highfidelity-beta-interface-dev-%GITHUB_SHA%.exe
