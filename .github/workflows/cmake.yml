@@ -1,6 +1,6 @@
 name: CMake CI
 
-on: []
+on: [push: {paths-ignore: '*'}]
 
 jobs:
   build:

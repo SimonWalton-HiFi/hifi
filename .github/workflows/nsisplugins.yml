@@ -7,5 +7,4 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: NSIS plugins
-        uses: ./.github/workflows/actions
         run: ./.github/workflows/actions/installnsisplugins.sh
