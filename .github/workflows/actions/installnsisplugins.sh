@@ -22,8 +22,8 @@ plugin='http://forums.winamp.com/attachment.php?attachmentid=48936&d=1309248568'
 curl -A 'Mozilla/5.0' "$plugin" > $tmpfile
 
 7z e -y -o"$nsis_include" $tmpfile 'Include/nsProcess.nsh'
-7z e -y -o"$nsis_plugins/x86-ansi" $tmpfile 'Plugins/nsProcess.dll'
-7z e -y -o"$nsis_plugins/x86-unicode" $tmpfile 'Plugins/nsProcessW.dll'
+7z e -y -o"$nsis_plugins/x86-ansi" $tmpfile 'Plugin/nsProcess.dll'
+7z e -y -o"$nsis_plugins/x86-unicode" $tmpfile 'Plugin/nsProcessW.dll'
 
 echo === InetC ===
 plugin='https://nsis.sourceforge.io/mediawiki/images/c/c9/Inetc.zip'
