@@ -11,5 +11,5 @@ jobs:
           submodules: true
           fetch-depth: 1
       - name: NSIS plugins
-        shell: bash
-        run: ./.github/workflows/actions/installnsisplugins.sh
+        shell: python
+        run: ./.github/workflows/actions/download_plugins.py
