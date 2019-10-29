@@ -163,6 +163,9 @@
   ; hide install details since we show an image slideshow in their place
   ShowInstDetails nevershow
 
+  ; leverage the UAC NSIS plugin to promote uninstaller to elevated privileges
+  !include UAC.nsh
+
   ; Set name prior to inner loop so uninstaller has correct values
   Name "@CPACK_NSIS_PACKAGE_NAME@"
   BrandingText " "
@@ -398,6 +401,82 @@ Function DownloadFile
 FunctionEnd
 !endif
 
+
+!include NSISpcre.nsh
+!insertmacro REMatches
+
+Var CampaignName
+
+!macro GetCampaignName RetVar
+  Call GetCampaignName
+  Pop ${RetVar}
+!macroend
+
+Function GetCampaignName
+  Push $0 ; Stash $0
+
+  ; Parse filename out of the path
+  ${RECaptureMatches} $0 "([^\\]*\\)*(.*)\.exe" $EXEPATH 0
+  ${If} $0 == 2
+    Pop $0 ; Discard Path
+    Pop $0 ; Recover filename
+    ; Parse campaign out of the filename
+    ${RECaptureMatches} $0 "HighFidelity-([^-]*-)Beta-.*" $0 0
+    ${If} $0 == 1
+      Pop $0 ; Recover campaign name
+      StrCpy $0 $0 -1 0 ; Remove trailing - and copy to _RetVar
+    ${Else}
+      StrCpy $0 ""
+    ${EndIf}
+  ${Else}
+    StrCpy $0 ""
+  ${EndIf}
+
+  Exch $0 ; Restore $0 and push result
+FunctionEnd
+
+!macro CreateGUID RetVar
+  System::Call 'ole32::CoCreateGuid(g .s)'
+  Pop ${RetVar}
+  ; Strip opening and closing braces
+  StrCpy ${RetVar} ${RetVar} -1 1
+!macroend
+
+Var GAClientID
+
+!macro InitGAClientID
+  ; Generate a new GUID on every run for now
+  !insertmacro CreateGUID $GAClientID
+!macroend
+
+!macro LogStep Category Action Label Value
+  ${LogText} "Step: ${Category} ${Action} ${Label} ${Value}"
+!macroend
+
+!macro GoogleAnalytics Category Action Label Value
+  ${If} "@GA_TRACKING_ID@" != ""
+    Push $0
+    Push $1
+
+    StrCpy $0 "https://google-analytics.com/collect?v=1&tid=@GA_TRACKING_ID@"
+    StrCpy $0 "$0&cid=$GAClientID&t=event&ec=${Category}&ea=${Action}"
+
+    ${If} "${Label}" != ""
+      StrCpy $0 "$0&el=${Label}"
+    ${EndIf}
+    ${If} "${Value}" != ""
+      StrCpy $0 "$0&ev=${Value}"
+    ${EndIf}
+
+    GetTempFileName $1
+    inetc::get /SILENT $0 $1 /END
+    Delete $1
+
+    Pop $1
+    Pop $0
+  ${EndIf}
+!macroend
+
 ;--------------------------------
 ; Installation types
 
@@ -417,24 +496,27 @@ FunctionEnd
 
 ;--------------------------------
 ;Pages
+  !define MUI_CUSTOMFUNCTION_ABORT OnUserAbort
+
+  !define MUI_PAGE_CUSTOMFUNCTION_PRE PageWelcomePre
   !insertmacro MUI_PAGE_WELCOME
 
+  !define MUI_PAGE_CUSTOMFUNCTION_PRE PageLicensePre
   !insertmacro MUI_PAGE_LICENSE "@CPACK_RESOURCE_FILE_LICENSE@"
 
   Page custom InstallTypesPage ReadInstallTypes
 
-  !define MUI_PAGE_CUSTOMFUNCTION_PRE AbortFunction
+  !define MUI_PAGE_CUSTOMFUNCTION_PRE PageDirectoryPre
   !insertmacro MUI_PAGE_DIRECTORY
 
   ;Start Menu Folder Page Configuration
   !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKLM"
   !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\@CPACK_PACKAGE_VENDOR@\@CPACK_PACKAGE_INSTALL_REGISTRY_KEY@"
   !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
-
-  !define MUI_PAGE_CUSTOMFUNCTION_PRE AbortFunction
+  !define MUI_PAGE_CUSTOMFUNCTION_PRE PageStartMenuPre
   !insertmacro MUI_PAGE_STARTMENU Application $STARTMENU_FOLDER
 
-  !define MUI_PAGE_CUSTOMFUNCTION_PRE AbortFunction
+  !define MUI_PAGE_CUSTOMFUNCTION_PRE PageComponentsPre
   @CPACK_NSIS_PAGE_COMPONENTS@
 
   ; the MUI_PAGE_CUSTOMFUNCTION_PRE shouldn't be defined here
@@ -445,6 +527,8 @@ FunctionEnd
 
   Page custom PostInstallOptionsPage ReadPostInstallOptions
 
+  !define MUI_PAGE_CUSTOMFUNCTION_PRE PageInstallFilesPre
+  !define MUI_PAGE_CUSTOMFUNCTION_SHOW StartInstallSlideshow
   !insertmacro MUI_PAGE_INSTFILES
 
   !insertmacro MUI_UNPAGE_CONFIRM
@@ -536,6 +620,69 @@ Var InstallTypeDialog
 Var CustomInstallTemporaryState
 Var Express
 
+!macro MaybeSkipPage
+  ; Check if Express is set, if so, abort the post install options page
+  ${If} $Express == "1"
+    ${LogText} "Express Install: Skipping Post Install Options Page"
+    Abort
+  ${EndIf}
+!macroend
+
+!macro DownloadSlideshowImages
+  ${LogText} "Download Slideshow Images"
+  InitPluginsDir
+
+  Push $0
+
+  ; figure out where to download installer slideshow images from
+  StrCpy $0 "http://cdn.highfidelity.com/installer/slideshow"
+
+  ${If} $CampaignName == ""
+    StrCpy $0 "$0/default"
+  ${Else}
+    StrCpy $0 "$0/$CampaignName"
+  ${EndIf}
+
+  NSISdl::download_quiet $0/1.jpg "$PLUGINSDIR\1.jpg"
+  NSISdl::download_quiet $0/2.jpg "$PLUGINSDIR\2.jpg"
+  NSISdl::download_quiet $0/3.jpg "$PLUGINSDIR\3.jpg"
+
+  Pop $0
+!macroend
+
+Function OnUserAbort
+  !insertmacro LogStep "Installer" "Abort" "User Abort" ""
+  !insertmacro GoogleAnalytics "Installer" "Abort" "User Abort" ""
+FunctionEnd
+Function PageWelcomePre
+  !insertmacro LogStep "Installer" "Welcome" "" ""
+  !insertmacro GoogleAnalytics "Installer" "Welcome" "" ""
+  !insertmacro DownloadSlideshowImages
+FunctionEnd
+Function PageLicensePre
+  !insertmacro LogStep "Installer" "License" "" ""
+  !insertmacro GoogleAnalytics "Installer" "License" "" ""
+FunctionEnd
+Function PageDirectoryPre
+  !insertmacro MaybeSkipPage
+  !insertmacro LogStep "Installer" "Directory" "" ""
+  !insertmacro GoogleAnalytics "Installer" "Directory" "" ""
+FunctionEnd
+Function PageStartMenuPre
+  !insertmacro MaybeSkipPage
+  !insertmacro LogStep "Installer" "StartMenu" "" ""
+  !insertmacro GoogleAnalytics "Installer" "StartMenu" "" ""
+FunctionEnd
+Function PageComponentsPre
+  !insertmacro MaybeSkipPage
+  !insertmacro LogStep "Installer" "Components" "" ""
+  !insertmacro GoogleAnalytics "Installer" "Components" "" ""
+FunctionEnd
+Function PageInstallFilesPre
+  !insertmacro LogStep "Installer" "Install" "" ""
+  !insertmacro GoogleAnalytics "Installer" "Install" "" ""
+FunctionEnd
+
 !macro SetInstallOption Checkbox OptionName Default
   ${LogText} "SetInstallOption ${OptionName} ${Default}"
   ; reads the value for the given install option to the registry
@@ -554,6 +701,9 @@ Var Express
 !macroend
 
 Function InstallTypesPage
+  !insertmacro LogStep "Installer" "Install Types" "" ""
+  !insertmacro GoogleAnalytics "Installer" "Install Types" "" ""
+
   !insertmacro MUI_HEADER_TEXT "Choose Installation Type" "Express or Custom Install"
 
   nsDialogs::Create 1018
@@ -606,14 +756,65 @@ Function ChangeCustomLabel
   Pop $R1
 FunctionEnd
 
-Function AbortFunction
-  ; Check if Express is set, if so, abort the post install options page
-  StrCmp $Express "1" 0 end
-  Abort
-  end:
+!macro AddImageToSlideshowFile ImageFilename
+  ${If} ${FileExists} "$PLUGINSDIR\${ImageFilename}.jpg"
+    FileWrite $0 "= ${ImageFilename}.jpg,500,5000,$\"$\"$\r$\n"
+    StrCpy $1 "1"
+  ${EndIf}
+!macroend
+
+Function StartInstallSlideshow
+  ; create a slideshow file based on what files we have available
+  ${LogText} "Start Installs Slideshow"
+
+  ; stash $0 and $1
+  Push $0
+  Push $1
+
+  ; start $1 as 0, indicating we have no images present
+  StrCpy $1 "0"
+
+  FileOpen $0 "$PLUGINSDIR\slideshow.dat" w
+
+  ; write the language value to the slideshow file for english
+  FileWrite $0 "[1033]$\r$\n"
+
+  ; for each of 1.jpg, 2.jpg, 3.jpg
+  ; if the image is present add it to the dat file and set our flag
+  ; to show we found at least one image
+  !insertmacro AddImageToSlideshowFile "1"
+  !insertmacro AddImageToSlideshowFile "2"
+  !insertmacro AddImageToSlideshowFile "3"
+
+  FileClose $0
+
+  ; NOTE: something inside of nsisSlideshow::show isn't keeping the stack clean
+  ; so we need to push things back BEFORE we call it
+
+  ${If} $1 == "1"
+    Pop $1
+    Pop $0
+
+    ; show the slideshow using the created data file
+    nsisSlideshow::show /NOUNLOAD "/auto=$PLUGINSDIR\slideshow.dat"
+  ${Else}
+    Pop $1
+    Pop $0
+
+    ; show the install details because we didn't end up with slideshow images to show
+    SetDetailsView show
+  ${EndIf}
+
 FunctionEnd
 
 Function PostInstallOptionsPage
+
+  ${LogText} "Install Directory: $INSTDIR"
+
+  !insertmacro MaybeSkipPage
+  !insertmacro LogStep "Installer" "Post Install Options" "" ""
+  !insertmacro GoogleAnalytics "Installer" "Post Install Options" "" ""
+
   !insertmacro MUI_HEADER_TEXT "Setup Options" ""
 
   nsDialogs::Create 1018
@@ -622,11 +823,6 @@ Function PostInstallOptionsPage
   ${If} $PostInstallDialog == error
     Abort
   ${EndIf}
-
-  ; Check if Express is set, if so, abort the post install options page
-  StrCmp $Express "1" 0 end
-  Abort
-  end:
 
   StrCpy $CurrentOffset 0
   StrCpy $OffsetUnits u
@@ -809,6 +1005,8 @@ Function HandlePostInstallOptions
       Delete "$DESKTOP\@CONSOLE_HF_SHORTCUT_NAME@.lnk"
       CreateShortCut "$DESKTOP\@SANDBOX_HF_SHORTCUT_NAME@.lnk" "$INSTDIR\@CONSOLE_INSTALL_SUBDIR@\@CONSOLE_WIN_EXEC_NAME@"
       !insertmacro WriteInstallOption @CONSOLE_DESKTOP_SHORTCUT_REG_KEY@ YES
+      ; Set appUserModelId
+      ApplicationID::Set "$DESKTOP\@SANDBOX_HF_SHORTCUT_NAME@.lnk" "@APP_USER_MODEL_ID@"
     ${Else}
       !insertmacro WriteInstallOption @CONSOLE_DESKTOP_SHORTCUT_REG_KEY@ NO
     ${EndIf}
@@ -818,6 +1016,8 @@ Function HandlePostInstallOptions
       Delete "$DESKTOP\@SANDBOX_HF_SHORTCUT_NAME@.lnk"
       CreateShortCut "$DESKTOP\@CONSOLE_HF_SHORTCUT_NAME@.lnk" "$INSTDIR\@CONSOLE_INSTALL_SUBDIR@\@CONSOLE_WIN_EXEC_NAME@"
       !insertmacro WriteInstallOption @CONSOLE_DESKTOP_SHORTCUT_REG_KEY@ YES
+      ; Set appUserModelId
+      ApplicationID::Set "$DESKTOP\@CONSOLE_HF_SHORTCUT_NAME@.lnk" "@APP_USER_MODEL_ID@"
     ${Else}
       !insertmacro WriteInstallOption @CONSOLE_DESKTOP_SHORTCUT_REG_KEY@ NO
     ${EndIf}
@@ -934,6 +1134,23 @@ Function HandlePostInstallOptions
   ${EndIf}
 FunctionEnd
 
+Function OptionallyDownloadCampaignServerless
+  ${If} $CampaignName != ""
+    InitPluginsDir
+
+    NSISdl::download_quiet http://cdn.highfidelity.com/installer/serverless/$CampaignName.zip $PLUGINSDIR\$CampaignName.zip
+
+    ${If} ${FileExists} $PLUGINSDIR\$CampaignName.zip
+      ; replace the installed serverless content with the campaign content
+
+      RMDir /r "$INSTDIR\resources\serverless"
+      CreateDirectory "$INSTDIR\resources\serverless"
+      nsisunz::Unzip "$PLUGINSDIR\$CampaignName.zip" "$INSTDIR\resources\serverless"
+    ${EndIf}
+
+  ${Endif}
+FunctionEnd
+
 ;--------------------------------
 ;Installer Sections
 
@@ -1003,6 +1220,7 @@ Section "-Core installation"
   Push $0
   FileOpen $0 "$INSTDIR\installer.ini" w
   FileWrite $0 "type=@INSTALLER_TYPE@$\r$\n"
+  FileWrite $0 "campaign=$CampaignName$\r$\n"
   FileWrite $0 "exepath=$EXEPATH$\r$\n"
   FileClose $0
   Pop $0
@@ -1085,12 +1303,14 @@ Section "-Core installation"
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\@SANDBOX_SHORTCUT_NAME@.lnk" \
       "$INSTDIR\@CONSOLE_INSTALL_SUBDIR@\@CONSOLE_WIN_EXEC_NAME@"
     ; Set appUserModelId
+    ApplicationID::Set "$SMPROGRAMS\$STARTMENU_FOLDER\@SANDBOX_SHORTCUT_NAME@.lnk" "@APP_USER_MODEL_ID@"
   ${Else}
     ; handling for interface only console shortcut
     Delete "$SMPROGRAMS\$STARTMENU_FOLDER\@SANDBOX_SHORTCUT_NAME@.lnk"
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\@CONSOLE_SHORTCUT_NAME@.lnk" \
       "$INSTDIR\@CONSOLE_INSTALL_SUBDIR@\@CONSOLE_WIN_EXEC_NAME@"
     ; Set appUserModelId
+    ApplicationID::Set "$SMPROGRAMS\$STARTMENU_FOLDER\@CONSOLE_SHORTCUT_NAME@.lnk" "@APP_USER_MODEL_ID@"
   ${EndIf}
 
   CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\@UNINSTALLER_NAME@"
@@ -1104,10 +1324,56 @@ Section "-Core installation"
 
   @CPACK_NSIS_EXTRA_INSTALL_COMMANDS@
 
+  ; see if we have a campaign that we might need to grab special content for
+  Call OptionallyDownloadCampaignServerless
+
   ; Handle whichever post install options were set
   Call HandlePostInstallOptions
 
+  !insertmacro LogStep "Installer" "Done" "" ""
+  !insertmacro GoogleAnalytics "Installer" "Done" "" ""
 SectionEnd
+
+!include nsProcess.nsh
+
+!macro PromptForRunningApplication applicationName displayName action prompter
+  !define UniqueID ${__LINE__}
+  Prompt_${UniqueID}:
+
+    ${nsProcess::FindProcess} ${applicationName} $R0
+
+    ${If} $R0 == 0
+
+      ; the process is running, ask the user to close it
+
+      ${If} "${displayName}" == "@CONSOLE_DISPLAY_NAME@"
+      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION \
+        "${displayName} cannot be ${action} while ${displayName} is running.$\r$\nPlease close it in the system tray and click Retry to continue." \
+        /SD IDCANCEL IDRETRY Prompt_${UniqueID} IDCANCEL 0
+      ${EndIf}
+
+      ${If} "${displayName}" == "@INTERFACE_DISPLAY_NAME@"
+      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION \
+        "${displayName} cannot be ${action} while ${displayName} is running.$\r$\nPlease close it in the task bar and click Retry to continue." \
+        /SD IDCANCEL IDRETRY Prompt_${UniqueID} IDCANCEL 0
+      ${EndIf}
+
+      !insertmacro GoogleAnalytics "Installer" "Abort" "${displayName} Running" ""
+
+      ; If the user decided to cancel, stop the current installer/uninstaller
+      Abort
+
+    ${EndIf}
+
+  !undef UniqueID
+!macroend
+
+!macro CheckForRunningApplications action prompter
+  !insertmacro PromptForRunningApplication "@INTERFACE_WIN_EXEC_NAME@" "@INTERFACE_DISPLAY_NAME@"  ${action} ${prompter}
+  !insertmacro PromptForRunningApplication "@CONSOLE_WIN_EXEC_NAME@" "@CONSOLE_DISPLAY_NAME@" ${action} ${prompter}
+  !insertmacro PromptForRunningApplication "@DS_EXEC_NAME@" "@DS_DISPLAY_NAME@" ${action} ${prompter}
+  !insertmacro PromptForRunningApplication "@AC_EXEC_NAME@" "@AC_DISPLAY_NAME@" ${action} ${prompter}
+!macroend
 
 ;--------------------------------
 ; determine admin versus local install
@@ -1124,25 +1390,32 @@ Function un.onInit
     Quit
   ${EndIf}
 
-  ClearErrors
-  UserInfo::GetName
-  IfErrors noLM
-  Pop $0
-  UserInfo::GetAccountType
-  Pop $1
-  StrCmp $1 "Admin" 0 +3
-    SetShellVarContext all
-    ;MessageBox MB_OK 'User "$0" is in the Admin group'
-    Goto done
-  StrCmp $1 "Power" 0 +3
-    SetShellVarContext all
-    ;MessageBox MB_OK 'User "$0" is in the Power Users group'
-    Goto done
+  ; make sure none of the installed applications are still running
+  !insertmacro CheckForRunningApplications "uninstalled" "Uninstaller"
+  ${nsProcess::Unload}
 
-  noLM:
-    ;Get installation folder from registry if available
+  ; attempt to elevate the uninstaller to admin status
+  uac_tryagain:
+  !insertmacro UAC_RunElevated
+  ${Switch} $0
+  ${Case} 0
+    ${IfThen} $1 = 1 ${|} Quit ${|} ;we are the outer process, the inner process has done its work, we are done
+    ${IfThen} $3 <> 0 ${|} ${Break} ${|} ;we are admin, let the show go on
+    ${If} $1 = 3 ;RunAs completed successfully, but with a non-admin user
+      MessageBox mb_YesNo|mb_IconExclamation|mb_TopMost|mb_SetForeground "The uninstaller requires admin privileges, try again" /SD IDNO IDYES uac_tryagain IDNO 0
+    ${EndIf}
+    ;fall-through and die
 
-  done:
+  ${Case} 1223
+    MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "The uninstaller requires admin privileges, aborting!"
+    Quit
+  ${Case} 1062
+    MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Logon service not running, aborting!"
+    Quit
+  ${Default}
+    MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Unable to elevate, error $0"
+    Quit
+  ${EndSwitch}
 
 FunctionEnd
 
@@ -1325,6 +1598,16 @@ Function .onInit
     ; just bail out quickly when running the "inner" installer
     Quit
   !endif
+
+  !insertmacro InitGAClientID
+  !insertmacro GetCampaignName $CampaignName
+
+  !insertmacro GoogleAnalytics "Installer" "Start" "$CampaignName" ""
+
+  ; make sure none of the installed applications are still running
+  ${LogText} "Checking For Running Applications"
+  !insertmacro CheckForRunningApplications "installed" "Installer"
+  ${nsProcess::Unload}
 
   StrCmp "@CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL@" "ON" 0 inst
 
