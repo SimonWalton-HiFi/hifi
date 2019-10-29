@@ -15,10 +15,13 @@ jobs:
     - name: create-build-dir
       run: cmake -E make_directory ${{runner.workspace}}/build
     - name: cmake configure
+      shell: bash
       env:
         HIFI_VCPKG_BOOTSTRAP: true
       working-directory: ${{runner.workspace}}/build
-      run: cmake %GITHUB_WORKSPACE% -DCLIENT_ONLY:BOOLEAN=TRUE -DBUILD_SERVER=OFF -DBUILD_TESTS=OFF -DBUILD_TOOLS=OFF -A x64 
+      run: |
+        env
+        cmake $GITHUB_WORKSPACE -DCLIENT_ONLY:BOOLEAN=TRUE -DBUILD_SERVER=OFF -DBUILD_TESTS=OFF -DBUILD_TOOLS=OFF -A x64 
     - name: build console
       working-directory: ${{runner.workspace}}/build
       run: cmake --build . --config Release --target packaged-server-console
