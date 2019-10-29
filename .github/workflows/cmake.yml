@@ -1,6 +1,6 @@
 name: CMake CI
 
-on: [push: {paths-ignore: '*'}]
+on: [push]
 
 jobs:
   build:
@@ -22,6 +22,9 @@ jobs:
     - name: build console
       working-directory: ${{runner.workspace}}/build
       run: cmake --build . --config Release --target packaged-server-console
+    - name: install NSIS plugins
+      shell: bash
+      run: ./.github/workflows/actions/download_plugins.py
     - name: build installer
       working-directory: ${{runner.workspace}}/build
       run: cmake --build . --config Release --target package
