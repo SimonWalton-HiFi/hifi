@@ -1,4 +1,4 @@
-#!env python3
+#!env python
 # Download pre-assembled pack of NSIS plugins.
 
 import urllib;
