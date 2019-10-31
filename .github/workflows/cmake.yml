@@ -14,10 +14,6 @@ jobs:
         fetch-depth: 1
     - name: create-build-dir
       run: cmake -E make_directory ${{runner.workspace}}/build
-    - name: Example Docker action
-      uses: actions/hello-world-docker-action@master
-      with:
-        who-to-greet: 'Dave'
     - name: cmake configure
       shell: bash
       env:
