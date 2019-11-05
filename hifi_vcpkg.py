@@ -53,8 +53,6 @@ endif()
         else:
             if 'Darwin' == system:
                 defaultBasePath = os.path.expanduser('~/hifi/vcpkg')
-            else:
-                defaultBasePath = os.path.join(tempfile.gettempdir(), 'hifi', 'vcpkg')
             self.basePath = os.getenv('HIFI_VCPKG_BASE', defaultBasePath)
             if self.args.android:
                 self.basePath = os.path.join(self.basePath, 'android')
