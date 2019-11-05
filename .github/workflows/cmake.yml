@@ -2,38 +2,122 @@ name: CMake CI
 
 on: [push]
 
+env:
+  CI_BUILD: Github
+
+  # Force the mac build to use 11.1 (required for vcpkg)
+  DEVELOPER_DIR: /Applications/Xcode_11.1.app/Contents/Developer
+  MACOSX_DEPLOYMENT_TARGET: '10.11'
+
+  BUILD_TYPE: Release
+  RELEASE_TYPE: PR
+  RELEASE_NUMBER: ${{ github.event.number }}
+  VERSION_CODE: ${{ github.event.number }}
+  GIT_PR_COMMIT: ${{ github.sha }}
+  # FIXME should be a shortened version of the SHA
+  GIT_PR_COMMIT_SHORT: ${{ github.sha }}
+
+  HIFI_VCPKG_BOOTSTRAP: true
+  BS_USERNAME: gustavo@highfidelity.io
+  BS_PASSWORD: ${MASKED_BUGSPLAT_PASSWORD}
+  CMAKE_BACKTRACE_URL: https://highfidelity.sp.backtrace.io:6098
+  GA_TRACKING_ID: UA-39558647-8
+  PreferredToolArchitecture: X64
+  OCULUS_APP_ID: '1255907384473836'
+  # CMAKE_BACKTRACE_TOKEN: ${MASKED_CMAKE_BACKTRACE_TOKEN}
+  # CMAKE_BACKTRACE_SYMBOLS_TOKEN: ${MASKED_BACKTRACE_UPLOAD_TOKEN}
+
+# Mac OS
+#PLATFORM_CMAKE_GENERATOR=Xcode
+#PLATFORM_BUILD_ARGUMENTS=--config Release --target package
+#ARTIFACT_EXPRESSION=build/*.dmg,build/*.zip
+
+# Windows 
+#PLATFORM_CMAKE_GENERATOR=Visual Studio 15 2017 Win64
+#PLATFORM_BUILD_ARGUMENTS=--target package --config release
+#ARTIFACT_EXPRESSION=build/*.exe,build/*.zip,*-symbols.zip
+#VCINSTALLDIR=C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC
+
+# Ubuntu 
+#PLATFORM_CMAKE_GENERATOR=Unix Makefiles
+#PLATFORM_BUILD_ARGUMENTS=--target all -- -j4
+#ARTIFACT_EXPRESSION=build/assignment-client/**,build/domain-server/**,build/ice-server/ice-server,build/tools/ice-client/ice-client,build/tools/ac-client/ac-client,build/tools/oven,build/ext/makefiles/nvtt/project/lib/**,build/ext/makefiles/quazip/project/lib/**
+
+# Android
+#OAUTH_CLIENT_SECRET=${MASKED_ANDROID_OAUTH_CLIENT_SECRET_NIGHTLY}
+#OAUTH_CLIENT_ID=6c7d2349c0614640150db37457a1f75dce98a28ffe8f14d47f6cfae4de5b262a
+#OAUTH_REDIRECT_URI=https://dev-android-interface.highfidelity.com/auth
+#ARTIFACT_EXPRESSION=android/*.apk
+#SHA7=${GIT_PR_COMMIT_SHORT}
+#ANDROID_APK_NAME=HighFidelity-Beta-PR${RELEASE_NUMBER}-${GIT_PR_COMMIT_SHORT}.apk
+#ANDROID_BUILT_APK_NAME=interface-debug.apk	
+#ANDROID_APP=interface
+#ANDROID_BUILD_DIR=debug
+#ANDROID_BUILD_TARGET=assembleDebug
+#STABLE_BUILD=0
+
 jobs:
   build:
+    strategy:
+      matrix:
+        os: [windows-latest]
+        #os: [windows-latest, ubuntu-latest, macOS-latest]
 
-    runs-on: windows-latest
+    runs-on: ${{ matrix.os }}
     
     steps:
     - uses: actions/checkout@v1
       with: 
         submodules: true
         fetch-depth: 1
-    - name: create-build-dir
+    - name: Install awscli
+      run: pip install awscli
+    - name: Create Build Environment
       run: cmake -E make_directory ${{runner.workspace}}/build
-    - name: cmake configure
+    - name: Configure CMake (Windows)
       shell: bash
-      env:
-        HIFI_VCPKG_BOOTSTRAP: true
+      if: matrix.os == 'windows-latest'
       working-directory: ${{runner.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DCLIENT_ONLY:BOOLEAN=TRUE -DBUILD_SERVER=OFF -DBUILD_TESTS=OFF -DBUILD_TOOLS=OFF -A x64 
-    - name: build console
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCLIENT_ONLY:BOOLEAN=TRUE -A x64 
+    - name: Configure CMake (Ubuntu)
+      shell: bash
+      if: matrix.os == 'ubuntu-latest'
       working-directory: ${{runner.workspace}}/build
-      run: cmake --build . --config Release --target packaged-server-console
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCLIENT_ONLY:BOOLEAN=TRUE 
+    - name: Configure CMake (Mac)
+      shell: bash
+      if: matrix.os == 'macOS-latest'
+      working-directory: ${{runner.workspace}}/build
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCLIENT_ONLY:BOOLEAN=TRUE -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -G Xcode
+    - name: Build Console
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --config $BUILD_TYPE --target packaged-server-console
+    - name: Build Interface
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --config $BUILD_TYPE --target interface
     - name: install NSIS plugins
       shell: bash
+      if: matrix.os == 'windows-latest'
       run: ./.github/workflows/actions/download_plugins.py
-    - name: build installer
-      working-directory: ${{runner.workspace}}/build
-      run: cmake --build . --config Release --target package
-    - name: install awscli
-      run: pip install awscli
-    - name: upload test
-      working-directory: ${{runner.workspace}}/build
+    - name: Build Installer
       shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --config $BUILD_TYPE --target package
+    - name: Upload artifact (Mac)
+      if: matrix.os == 'macOS-latest'
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      env:
+        AWS_ACCESS_KEY_ID: AKIAJOF5R5WQWQL6C7UQ
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
+        ARTIFACT_NAME: HighFidelity-Beta-Interface-PR${{ github.event.number }}-${{ github.sha }}.dmg
+      run: aws s3 cp $ARTIFACT_NAME s3://hifi-public/austin/builds/$ARTIFACT_NAME
+    - name: Upload artifact (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}

@@ -7,6 +7,10 @@ else()
   cmake_minimum_required(VERSION 3.2)
 endif()
 
+if(NOT ("$ENV{CI_BUILD}" STREQUAL "Github"))
+    message(FATAL_ERROR "Prevent Jenkins build for this test PR")
+endif()
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/macros/TargetPython.cmake")
 target_python()
 
@@ -19,7 +23,7 @@ endif()
 # (needs to be set before first project() call and before prebuild.py)
 # Will affect VCPKG dependencies
 if (APPLE)
-  set(ENV{MACOSX_DEPLOYMENT_TARGET} 10.9)
+  set(ENV{MACOSX_DEPLOYMENT_TARGET} 10.11)
 endif()
 
 set(RELEASE_TYPE "$ENV{RELEASE_TYPE}")
@@ -47,6 +51,11 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/vcpkg.cmake")
     message(FATAL_ERROR "vcpkg configuration missing.")
 endif()
 include("${CMAKE_BINARY_DIR}/vcpkg.cmake")
+
+if(NOT EXISTS "${CMAKE_BINARY_DIR}/qt.cmake")
+    message(FATAL_ERROR "qt configuration missing.")
+endif()
+include("${CMAKE_BINARY_DIR}/qt.cmake")
 
 project(hifi)
 include("cmake/init.cmake")
