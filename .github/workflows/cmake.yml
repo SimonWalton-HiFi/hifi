@@ -60,7 +60,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [windows-latest]
+        os: [ubuntu-latest]
         #os: [windows-latest, ubuntu-latest, macOS-latest]
 
     runs-on: ${{ matrix.os }}
@@ -101,6 +101,13 @@ jobs:
       shell: bash
       if: matrix.os == 'windows-latest'
       run: ./.github/workflows/actions/download_plugins.py
+
+    - name: Build Ubuntu Docker
+      if: matrix.os == 'ubuntu-latest'
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: docker build -f $GITHUB_WORKSPACE/.github/workflows/actions/Dockerfile ./
+
     - name: Build Installer
       shell: bash
       working-directory: ${{runner.workspace}}/build
