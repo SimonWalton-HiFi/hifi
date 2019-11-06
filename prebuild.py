@@ -120,6 +120,13 @@ def main():
     logger.info('sha=%s' % headSha())
     logger.info('start')
 
+    # OS dependent information
+    system = platform.system()
+    if 'Windows' == system and 'CI_BUILD' in os.environ and os.environ["CI_BUILD"] == "Github":
+        logger.info("Downloading NSIS")
+        with timer('NSIS'):
+            hifi_utils.downloadAndExtract('https://hifi-public.s3.amazonaws.com/dependencies/NSIS-hifi-plugins-1.0.tgz', "C:/Program Files (x86)")
+
     qtInstallPath = ''
     # If not android, install our Qt build
     if not args.android:
