@@ -51,8 +51,7 @@ endif()
             self.path = args.vcpkg_root
             self.noClean = True
         else:
-            if 'Darwin' == system:
-                defaultBasePath = os.path.expanduser('~/hifi/vcpkg')
+            defaultBasePath = os.path.expanduser('~/hifi/vcpkg')
             self.basePath = os.getenv('HIFI_VCPKG_BASE', defaultBasePath)
             if self.args.android:
                 self.basePath = os.path.join(self.basePath, 'android')
@@ -77,15 +76,14 @@ endif()
         self.buildEnv = os.environ.copy()
         self.prebuiltArchive = None
 
-
         if 'Windows' == system:
             self.exe = os.path.join(self.path, 'vcpkg.exe')
             self.bootstrapCmds = [ os.path.join(self.path, 'bootstrap-vcpkg.bat') ]
             self.vcpkgUrl = 'https://hifi-public.s3.amazonaws.com/dependencies/vcpkg/vcpkg-win32.tar.gz?versionId=YZYkDejDRk7L_hrK_WVFthWvisAhbDzZ'
             self.vcpkgHash = '3e0ff829a74956491d57666109b3e6b5ce4ed0735c24093884317102387b2cb1b2cd1ff38af9ed9173501f6e32ffa05cc6fe6d470b77a71ca1ffc3e0aa46ab9e'
             self.hostTriplet = 'x64-windows'
-            if ('CI_BUILD' in os.environ) and os.environ["CI_BUILD"] == "Github":
-                self.prebuiltArchive = "https://hifi-public.s3.amazonaws.com/dependencies/vcpkg/builds/258877bd/258877bd-win32.zip"
+            if ('CI_BUILD' in os.environ) and os.environ["CI_BUILD"] == "Github" and (not self.noClean):
+                self.prebuiltArchive = "https://hifi-public.s3.amazonaws.com/dependencies/vcpkg/builds/vcpkg-win32.zip?versionId=LtGKnBydCxteY3Ub1W_UNBN5sH.Ccp5g"
         elif 'Darwin' == system:
             self.exe = os.path.join(self.path, 'vcpkg')
             self.bootstrapCmds = [ os.path.join(self.path, 'bootstrap-vcpkg.sh'), '--allowAppleClang' ]
