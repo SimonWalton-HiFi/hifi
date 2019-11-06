@@ -6,7 +6,7 @@ env:
   CI_BUILD: Github
 
   # Force the mac build to use 11.1 (required for vcpkg)
-  DEVELOPER_DIR: /Applications/Xcode_10.3.app/Contents/Developer
+  DEVELOPER_DIR: /Applications/Xcode_11.2.app/Contents/Developer
   MACOSX_DEPLOYMENT_TARGET: '10.11'
 
   BUILD_TYPE: Release
@@ -60,7 +60,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [windows-latest]
+        os: [windows-latest, macOS-latest]
         #os: [windows-latest, ubuntu-latest, macOS-latest]
 
     runs-on: ${{ matrix.os }}
