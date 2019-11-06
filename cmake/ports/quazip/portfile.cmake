@@ -1,7 +1,5 @@
 include(vcpkg_common_functions)
-vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 
-# else Linux desktop
 vcpkg_download_distfile(
     SOURCE_ARCHIVE
     URLS https://public.highfidelity.com/dependencies/quazip-0.7.3.zip
@@ -18,11 +16,17 @@ vcpkg_extract_source_archive_ex(
 vcpkg_configure_cmake(
   SOURCE_PATH ${SOURCE_PATH}
   PREFER_NINJA
-  OPTIONS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_PREFIX_PATH=$ENV{QT_CMAKE_PREFIX_PATH}
+  OPTIONS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_PREFIX_PATH=$ENV{QT_CMAKE_PREFIX_PATH} -DBUILD_WITH_QT4=OFF
 )
 
 vcpkg_install_cmake()
 
+if (WIN32)
+    file(MAKE_DIRECTORY ${CURRENT_PACKAGES_DIR}/bin)
+    file(RENAME ${CURRENT_PACKAGES_DIR}/lib/quazip5.dll ${CURRENT_PACKAGES_DIR}/bin/quazip5.dll)
+    file(MAKE_DIRECTORY ${CURRENT_PACKAGES_DIR}/debug/bin)
+    file(RENAME ${CURRENT_PACKAGES_DIR}/debug/lib/quazip5d.dll ${CURRENT_PACKAGES_DIR}/debug/bin/quazip5.dll)
+endif()
 file(INSTALL ${SOURCE_PATH}/COPYING DESTINATION ${CURRENT_PACKAGES_DIR}/share/quazip RENAME copyright)
 file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/debug/include)
 
