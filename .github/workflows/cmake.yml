@@ -118,14 +118,12 @@ jobs:
       run: aws s3 cp $ARTIFACT_NAME s3://hifi-public/austin/builds/$ARTIFACT_NAME
 
   build_client_win32:
-    runs-on: DESKTOP-KR0P2N7
+    runs-on: [self-hosted, windows]
     steps:
     - uses: actions/checkout@v1
       with: 
         submodules: true
         fetch-depth: 1
-    - name: Install awscli
-      run: pip install awscli
     - name: Create Build Environment
       run: cmake -E make_directory ${{runner.workspace}}/build
     - name: Configure CMake (Windows)
