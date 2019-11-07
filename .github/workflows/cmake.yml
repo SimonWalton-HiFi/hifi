@@ -86,12 +86,6 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
         ARTIFACT_NAME: HighFidelity-Beta-Interface-PR${{ github.event.number }}-${{ github.sha }}.dmg
       run: aws s3 cp $ARTIFACT_NAME s3://hifi-public/austin/builds/$ARTIFACT_NAME
-    - name: Link Build to PR
-      uses: unsplash/comment-on-pr@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        msg: "Mac client-only build  [HighFidelity-Beta-Interface-PR${{ github.event.number }}-${{ github.sha }}.dmg](https://hifi-public.s3.amazonaws.com/austin/builds/HighFidelity-Beta-Interface-PR${{ github.event.number }}-${{ github.sha }}.dmg)"
 
   build_full_mac:
     runs-on: macOS-latest
@@ -120,14 +114,8 @@ jobs:
       working-directory: ${{runner.workspace}}/build
       env:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
-        ARTIFACT_NAME: HighFidelity-Beta-Interface-PR${{ github.event.number }}-${{ github.sha }}.dmg
+        ARTIFACT_NAME: HighFidelity-Beta-PR${{ github.event.number }}-${{ github.sha }}.dmg
       run: aws s3 cp $ARTIFACT_NAME s3://hifi-public/austin/builds/$ARTIFACT_NAME
-    - name: Link Build to PR
-      uses: unsplash/comment-on-pr@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        msg: "Mac full build  [HighFidelity-Beta-PR${{ github.event.number }}-${{ github.sha }}.dmg](https://hifi-public.s3.amazonaws.com/austin/builds/HighFidelity-Beta-PR${{ github.event.number }}-${{ github.sha }}.dmg)"
 
   build_client_win32:
     runs-on: windows-latest
@@ -166,14 +154,7 @@ jobs:
       env:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
         ARTIFACT_NAME: HighFidelity-Beta-Interface-PR${{ github.event.number }}-${{ github.sha }}.exe
-      run: aws s3 cp $ARTIFACT_NAME s3://hifi-public/austin/builds/ARTIFACT_NAME
-    - name: Link Build to PR
-      uses: unsplash/comment-on-pr@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        msg: "Windows Client-only build  [https://hifi-public.s3.amazonaws.com/austin/builds/HighFidelity-Beta-Interface-PR${{ github.event.number }}-${{ github.sha }}.exe](https://hifi-public.s3.amazonaws.com/austin/builds/HighFidelity-Beta-Interface-PR${{ github.event.number }}-${{ github.sha }}.exe)"
-
+      run: aws s3 cp $ARTIFACT_NAME s3://hifi-public/austin/builds/$ARTIFACT_NAME
           
   build_full_win32:
     runs-on: windows-latest
@@ -209,9 +190,3 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
         ARTIFACT_NAME: HighFidelity-Beta-PR${{ github.event.number }}-${{ github.sha }}.exe
       run: aws s3 cp $ARTIFACT_NAME s3://hifi-public/austin/builds/$ARTIFACT_NAME
-    - name: Link Build to PR
-      uses: unsplash/comment-on-pr@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        msg: "Windows full build  [HighFidelity-Beta-PR${{ github.event.number }}-${{ github.sha }}.exe](https://hifi-public.s3.amazonaws.com/austin/builds/HighFidelity-Beta-PR${{ github.event.number }}-${{ github.sha }}.exe)"
