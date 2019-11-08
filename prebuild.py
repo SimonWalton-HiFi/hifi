@@ -127,10 +127,12 @@ def main():
         with timer('NSIS'):
             hifi_utils.downloadAndExtract('https://hifi-public.s3.amazonaws.com/dependencies/NSIS-hifi-plugins-1.0.tgz', "C:/Program Files (x86)")
 
-    if 'Darwin' == system and 'CI_BUILD' in os.environ and os.environ["CI_BUILD"] == "Github":
-        logger.info("Downloading Mac SDK")
-        with timer('MacosSDK'):
-            hifi_utils.downloadAndExtract('https://hifi-public.s3.amazonaws.com/dependencies/github_actions/MacOSX10.14.sdk.tgz', os.path.expanduser('~/hifi/sdk'))
+    # if 'Darwin' == system and 'CI_BUILD' in os.environ and os.environ["CI_BUILD"] == "Github":
+    #     sdkpath = os.path.expanduser('~/hifi/sdk')
+    #     if not os.path.isdir(sdkpath):
+    #         logger.info("Downloading Mac SDK to {}".format(sdkpath))
+    #         with timer('MacosSDK'):
+    #             hifi_utils.downloadAndExtract('https://hifi-public.s3.amazonaws.com/dependencies/github_actions/MacOSX10.14.sdk.tgz', sdkpath)
 
     qtInstallPath = ''
     # If not android, install our Qt build
