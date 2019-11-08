@@ -70,7 +70,7 @@ jobs:
       run: cmake -E make_directory ${{runner.workspace}}/build
     - name: Configure CMake
       working-directory: ${{runner.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCLIENT_ONLY:BOOLEAN=TRUE -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -G Xcode -DVCPKG_APPLOCAL_DEPS=OFF
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCLIENT_ONLY:BOOLEAN=TRUE -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -G Xcode -DVCPKG_APPLOCAL_DEPS=OFF -DCMAKE_OSX_SYSROOT=macosx10.14
     - name: Build Console
       working-directory: ${{runner.workspace}}/build
       run: cmake --build . --config $BUILD_TYPE --target packaged-server-console
@@ -87,6 +87,7 @@ jobs:
         ARTIFACT_NAME: HighFidelity-Beta-Interface-PR${{ github.event.number }}-${{ github.sha }}.dmg
       run: aws s3 cp $ARTIFACT_NAME s3://hifi-public/austin/builds/$ARTIFACT_NAME
 
+
   build_full_mac:
     runs-on: macOS-latest
     steps:
@@ -100,7 +101,7 @@ jobs:
       run: cmake -E make_directory ${{runner.workspace}}/build
     - name: Configure CMake
       working-directory: ${{runner.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -G Xcode -DVCPKG_APPLOCAL_DEPS=OFF
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -G Xcode -DVCPKG_APPLOCAL_DEPS=OFF -DCMAKE_OSX_SYSROOT=macosx10.14
     - name: Build Console
       working-directory: ${{runner.workspace}}/build
       run: cmake --build . --config $BUILD_TYPE --target packaged-server-console
