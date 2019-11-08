@@ -51,10 +51,7 @@ endif()
             self.path = args.vcpkg_root
             self.noClean = True
         else:
-            if 'Darwin' == system:
-                defaultBasePath = os.path.expanduser('~/hifi/vcpkg')
-            else:
-                defaultBasePath = os.path.join(tempfile.gettempdir(), 'hifi', 'vcpkg')
+            defaultBasePath = os.path.expanduser('~/hifi/vcpkg')
             self.basePath = os.getenv('HIFI_VCPKG_BASE', defaultBasePath)
             if self.args.android:
                 self.basePath = os.path.join(self.basePath, 'android')
@@ -78,7 +75,6 @@ endif()
         self.bootstrapEnv = os.environ.copy()
         self.buildEnv = os.environ.copy()
         self.prebuiltArchive = None
-
 
         if 'Windows' == system:
             self.exe = os.path.join(self.path, 'vcpkg.exe')
