@@ -25,6 +25,7 @@ file(INSTALL ${SOURCE_PATH}/LICENSE.TXT DESTINATION ${CURRENT_PACKAGES_DIR}/shar
 file(MAKE_DIRECTORY ${CURRENT_PACKAGES_DIR}/include)
 file(MAKE_DIRECTORY ${CURRENT_PACKAGES_DIR}/lib)
 file(MAKE_DIRECTORY ${CURRENT_PACKAGES_DIR}/debug/lib)
+
 if (APPLE)
     file(GLOB LIBS ${CURRENT_PACKAGES_DIR}/lib/Release/*)
     foreach(_lib ${LIBS})
@@ -42,7 +43,7 @@ if (APPLE)
     file(RENAME ${CURRENT_PACKAGES_DIR}/include/PolyVoxUtil ${CURRENT_PACKAGES_DIR}/include/PolyVoxUtil.temp)
     file(RENAME ${CURRENT_PACKAGES_DIR}/include/PolyVoxUtil.temp/PolyVoxUtil ${CURRENT_PACKAGES_DIR}/include/PolyVoxUtil)
     file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/include/PolyVoxUtil.temp)
-else()
+elseif(WIN32)
     file(RENAME ${CURRENT_PACKAGES_DIR}/PolyVoxCore/lib/Release/PolyVoxCore.lib ${CURRENT_PACKAGES_DIR}/lib/PolyVoxCore.lib)
     file(RENAME ${CURRENT_PACKAGES_DIR}/debug/PolyVoxCore/lib/Debug/PolyVoxCore.lib ${CURRENT_PACKAGES_DIR}/debug/lib/PolyVoxCore.lib)
     file(RENAME ${CURRENT_PACKAGES_DIR}/PolyVoxUtil/lib/PolyVoxUtil.lib ${CURRENT_PACKAGES_DIR}/lib/PolyVoxUtil.lib)
@@ -56,7 +57,31 @@ else()
     file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/PolyVoxUtil)
     file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/debug/PolyVoxUtil)
     file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/debug/PolyVoxCore)
+else()  # Linux
+    file(GLOB LIBS ${CURRENT_PACKAGES_DIR}/lib/Release/*)
+    foreach(_lib ${LIBS})
+        file(RELATIVE_PATH _libName ${CURRENT_PACKAGES_DIR}/lib/Release ${_lib})
+        file(RENAME ${_lib} ${CURRENT_PACKAGES_DIR}/lib/${_libName})
+    endforeach()
+
+    file(GLOB LIBS ${CURRENT_PACKAGES_DIR}/debug/lib/Debug/*)
+    foreach(_lib ${LIBS})
+        file(RELATIVE_PATH _libName ${CURRENT_PACKAGES_DIR}/debug/lib/Debug ${_lib})
+        file(RENAME ${_lib} ${CURRENT_PACKAGES_DIR}/debug/lib/${_libName})
+    endforeach()
+
+
+    file(RENAME ${CURRENT_PACKAGES_DIR}/include/PolyVoxCore ${CURRENT_PACKAGES_DIR}/include/PolyVoxCore.temp)
+    file(RENAME ${CURRENT_PACKAGES_DIR}/include/PolyVoxCore.temp/PolyVoxCore ${CURRENT_PACKAGES_DIR}/include/PolyVoxCore)
+    file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/include/PolyVoxCore.temp)
+
+    file(RENAME ${CURRENT_PACKAGES_DIR}/include/PolyVoxUtil ${CURRENT_PACKAGES_DIR}/include/PolyVoxUtil.temp)
+    file(RENAME ${CURRENT_PACKAGES_DIR}/include/PolyVoxUtil.temp/PolyVoxUtil ${CURRENT_PACKAGES_DIR}/include/PolyVoxUtil)
+    file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/include/PolyVoxUtil.temp)
+
+    file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/share/PolyVox)
 endif()
+
 file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/lib/Release)
 file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/lib/RelWithDebInfo)
 file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/lib/Debug)
