@@ -214,13 +214,13 @@ jobs:
     - name: Configure CMake (Linux)
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: 'env | sort; ls; cmake ${{runner.workspace}} -DCMAKE_BUILD_TYPE=$BUILD_TYPE'
+      run: 'env | sort; ls ${{runner.workspace}}; cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE'
     - name: Build
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: cmake --build . --config $BUILD_TYPE
+      run: cmake --build .
     - name: Build Ubuntu Docker
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: docker build -f ${{runner.workspace}}/.github/workflows/actions/Dockerfile ./
+      run: docker build -f $GITHUB_WORKSPACE/.github/workflows/actions/Dockerfile ./
 
