@@ -209,6 +209,8 @@ jobs:
         fetch-depth: 1
     - name: Install awscli
       run: pip install awscli
+    - name: Install mesa-common-dev
+      run: apt install -y mesa-common-dev
     - name: Create Build Environment
       run: cmake -E make_directory ${{runner.workspace}}/build
     - name: Configure CMake (Linux)
