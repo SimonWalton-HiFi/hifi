@@ -201,7 +201,7 @@ jobs:
 
   build_full_linux:
     if: true
-    runs_on: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
       with: 
