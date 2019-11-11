@@ -214,7 +214,7 @@ jobs:
     - name: Configure CMake (Linux)
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: cmake ${{runner.workspace}} -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+      run: 'env | sort; ls; cmake ${{runner.workspace}} -DCMAKE_BUILD_TYPE=$BUILD_TYPE'
     - name: Build
       shell: bash
       working-directory: ${{runner.workspace}}/build
