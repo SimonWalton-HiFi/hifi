@@ -4,7 +4,6 @@ on: [push]
 
 env:
   CI_BUILD: Github
-  AWS_ACCESS_KEY_ID: AKIAJOF5R5WQWQL6C7UQ
 
   # Force the mac build to use 11.1 (required for vcpkg)
   DEVELOPER_DIR: /Applications/Xcode_11.2.app/Contents/Developer
@@ -58,6 +57,7 @@ env:
 
 jobs:
   build_client_mac:
+    if: false
     runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v1
@@ -89,6 +89,7 @@ jobs:
 
 
   build_full_mac:
+    if: false
     runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v1
@@ -119,6 +120,7 @@ jobs:
       run: aws s3 cp $ARTIFACT_NAME s3://hifi-public/austin/builds/$ARTIFACT_NAME
 
   build_client_win32:
+    if: false
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v1
@@ -144,11 +146,6 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: ./.github/workflows/actions/download_plugins.py
 
-    - name: Build Ubuntu Docker
-      if: matrix.os == 'ubuntu-latest'
-      shell: bash
-      working-directory: ${{runner.workspace}}/build
-      run: docker build -f $GITHUB_WORKSPACE/.github/workflows/actions/Dockerfile ./
 
     - name: Build Installer
       shell: bash
@@ -167,6 +164,7 @@ jobs:
       run: aws s3 cp $ARTIFACT_NAME s3://hifi-public/austin/builds/$ARTIFACT_NAME
           
   build_full_win32:
+    if: false
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v1
@@ -200,3 +198,29 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
       run: aws s3 cp highfidelity-beta-interface-dev.exe s3://hifi-public/simon/builds/highfidelity-beta-interface-PR${{ github.event.number }}-${{ github.sha }}.exe
+
+  build_full_linux:
+    if: true
+    runs_on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+      with: 
+        submodules: true
+        fetch-depth: 1
+    - name: Install awscli
+      run: pip install awscli
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{runner.workspace}}/build
+    - name: Configure CMake (Linux)
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: cmake ${{runner.workspace}} -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+    - name: Build
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: cmake --build . --config $BUILD_TYPE
+    - name: Build Ubuntu Docker
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: docker build -f ${{runner.workspace}}/.github/workflows/actions/Dockerfile ./
+
