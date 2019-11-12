@@ -216,7 +216,7 @@ jobs:
     - name: Configure CMake (Linux)
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: 'env | sort; ls ${{runner.workspace}}; cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE'
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_TOOLS:BOOLEAN=false
     - name: Build
       shell: bash
       working-directory: ${{runner.workspace}}/build
