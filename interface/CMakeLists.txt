@@ -293,6 +293,7 @@ if (UNIX AND NOT ANDROID)
     if (CMAKE_SYSTEM_NAME MATCHES "Linux")
         # Linux
         target_link_libraries(${TARGET_NAME} pthread atomic)
+	set_property(TARGET ${TARGET_NAME} APPEND PROPERTY LINK_FLAGS -Wl,--allow-multiple-definition)
     else ()
         # OSX
         target_link_libraries(${TARGET_NAME} pthread)
