@@ -209,8 +209,8 @@ jobs:
         fetch-depth: 1
     - name: Install awscli
       run: pip install awscli
-    - name: Install mesa-common-dev, libegl1
-      run: sudo apt install -y mesa-common-dev libegl1
+    - name: Install mesa-common-dev, libegl1, libglvnd-dev
+      run: sudo apt install -y mesa-common-dev libegl1 libglvnd-dev
     - name: Create Build Environment
       run: cmake -E make_directory ${{runner.workspace}}/build
     - name: Configure CMake (Linux)
