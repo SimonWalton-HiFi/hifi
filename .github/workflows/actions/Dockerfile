@@ -16,7 +16,7 @@ RUN apt-get update && apt-get -y --allow-unauthenticated install libglib2.0-0 li
 RUN mkdir -p /etc/hifi/server/plugins /etc/hifi/server/resources /etc/hifi/server/imageformats/ && \
     ln -s /usr/local/Qt5.12.3/5.12.3/gcc_64/plugins/imageformats/* /etc/hifi/server/imageformats/
 COPY ./assignment-client /etc/hifi/server/
-COPY ./oven /etc/hifi/server/
+#COPY ./oven /etc/hifi/server/
 COPY ./domain-server /etc/hifi/server/
 COPY ./plugins/libhifiCodec.so /etc/hifi/server/plugins/
 COPY ./plugins/libpcmCodec.so /etc/hifi/server/plugins/
