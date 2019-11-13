@@ -18,8 +18,8 @@ RUN mkdir -p /etc/hifi/server/plugins /etc/hifi/server/resources /etc/hifi/serve
 COPY ./assignment-client /etc/hifi/server/
 #COPY ./oven /etc/hifi/server/
 COPY ./domain-server /etc/hifi/server/
-COPY ./plugins/libhifiCodec.so /etc/hifi/server/plugins/
-COPY ./plugins/libpcmCodec.so /etc/hifi/server/plugins/
+COPY ./plugins/hifiCodec/libhifiCodec.so /etc/hifi/server/plugins/
+COPY ./plugins/pcmCodec/libpcmCodec.so /etc/hifi/server/plugins/
 COPY ./libquazip5.so.1 ./*.so /lib/
 COPY ./resources/ /etc/hifi/server/resources/
 COPY ./supervisor/hifi.conf /etc/supervisor/conf.d/hifi.conf
