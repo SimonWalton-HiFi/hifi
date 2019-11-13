@@ -209,11 +209,9 @@ jobs:
         fetch-depth: 1
     - name: Install awscli
       run: pip install awscli
-    - name: list packages
-      run: apt list --installed
     - name: Install apt packages
       # libglu1-mesa-dev needed for oven, npm for server-console
-      run: sudo apt install -y mesa-common-dev libegl1 libglvnd-dev libdouble-conversion1
+      run: sudo apt install -y mesa-common-dev libegl1 libglvnd-dev libdouble-conversion1 libpulse0
     - name: Create Build Environment
       run: cmake -E make_directory ${{runner.workspace}}/build
     - name: Configure CMake (Linux)
