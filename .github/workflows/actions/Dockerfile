@@ -12,7 +12,7 @@ RUN apt-get update && apt-get -y --allow-unauthenticated install libglib2.0-0 li
     libfontconfig1-dev libicu-dev libfreetype6 libssl-dev libpng-dev libjpeg-dev \
     python libx11-dev libxext-dev libtbb2 hifiqt5.12.3 \
     ntp unzip libwww-perl libdatetime-perl make pkg-config libnss3 libxi6 \
-    libxcursor1 libxcomposite1 libasound2 libxtst6 libxslt1.1 supervisor
+    libxcursor1 libxcomposite1 libasound2 libxtst6 libxslt1.1 supervisor </dev/null
 
 RUN mkdir -p /etc/hifi/server/plugins /etc/hifi/server/resources /etc/hifi/server/imageformats/ && \
     ln -s /usr/local/Qt5.12.3/5.12.3/gcc_64/plugins/imageformats/* /etc/hifi/server/imageformats/
