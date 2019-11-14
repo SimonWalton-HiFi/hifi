@@ -221,7 +221,8 @@ jobs:
     - name: Build
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: cmake --build .
+      # Parallel make:
+      run: cmake --build . -- -j3
     - name: Build Ubuntu Docker
       shell: bash
       working-directory: ${{runner.workspace}}/build

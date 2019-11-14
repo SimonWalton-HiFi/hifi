@@ -10,4 +10,10 @@ macro(TARGET_QUAZIP)
   find_library(QUAZIP_LIBRARY_DEBUG quazip5 PATHS ${VCPKG_INSTALL_ROOT}/debug/lib NO_DEFAULT_PATH)
   select_library_configurations(QUAZIP)
   target_link_libraries(${TARGET_NAME} ${QUAZIP_LIBRARIES})
+  add_custom_command(
+    TARGET ${TARGET_NAME}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND}
+    ARGS -e copy ${QUAZIP_LIBRARIES} ${CMAKE_BINARY_DIR}
+    )
 endmacro()
