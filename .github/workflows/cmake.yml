@@ -226,5 +226,13 @@ jobs:
     - name: Build Ubuntu Docker
       shell: bash
       working-directory: ${{runner.workspace}}/build
-      run: docker build -f $GITHUB_WORKSPACE/.github/workflows/actions/Dockerfile ./
+      run: docker build -t hifi_gha:$GIT_PR_COMMIT_SHORT -f $GITHUB_WORKSPACE/.github/workflows/actions/Dockerfile ./
+    - name: Upload Docker image
+      shell: bash
+      env:
+                AWS_ACCESS_KEY_ID: ${{ secrets.AWS_KEY_ID }}
+                AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
+      run: |
+              docker save -o hifi_container.tar hifi_gha:$GIT_PR_COMMIT_SHORT
+              aws s3 cp hifi_container.tar s3://hifi-public/simon/builds/hifi_container.$GIT_PR_COMMIT_SHORT.tar
 
